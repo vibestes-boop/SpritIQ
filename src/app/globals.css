@@ -1,26 +1,253 @@
+/* ─────────────────────────────────────────────────────────
+   SpritIQ — Google Fonts (MUSS vor @import "tailwindcss" stehen)
+   Space Grotesk (Headlines) | Inter (Body) | JetBrains Mono (Zahlen)
+───────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ─────────────────────────────────────────────────────────
+   SpritIQ — Design Tokens (Tailwind v4 @theme)
+───────────────────────────────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Farben aus MASTERPLAN */
+  --color-bg:          #0A0A0F;
+  --color-surface:     #111118;
+  --color-surface-2:   #16161F;
+  --color-border:      #1E1E2E;
+  --color-border-soft: #2A2A3C;
+
+  /* Semantic Colors */
+  --color-accent:      #22C55E;
+  --color-accent-dim:  #16A34A;
+  --color-warn:        #F59E0B;
+  --color-warn-dim:    #D97706;
+  --color-bad:         #EF4444;
+  --color-bad-dim:     #DC2626;
+  --color-highlight:   #3B82F6;
+
+  /* Typografie */
+  --color-text:        #F8FAFC;
+  --color-text-muted:  #64748B;
+  --color-text-dim:    #94A3B8;
+
+  /* Fonts */
+  --font-headline:     'Space Grotesk', system-ui, sans-serif;
+  --font-body:         'Inter', system-ui, sans-serif;
+  --font-mono:         'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Radius (aus MASTERPLAN) */
+  --radius-card:       16px;   /* rounded-2xl */
+  --radius-btn:        12px;   /* rounded-xl */
+  --radius-tag:        9999px; /* rounded-full */
+  --radius-input:      10px;
+
+  /* Spacing */
+  --space-xs:   4px;
+  --space-sm:   8px;
+  --space-md:   16px;
+  --space-lg:   24px;
+  --space-xl:   32px;
+  --space-2xl:  48px;
+  --space-3xl:  64px;
+
+  /* Shadows (dunkle UI) */
+  --shadow-sm:  0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.5);
+  --shadow-lg:  0 10px 30px rgba(0,0,0,0.6);
+  --shadow-xl:  0 20px 50px rgba(0,0,0,0.7);
+  --shadow-accent: 0 0 20px rgba(34,197,94,0.25);
+  --shadow-warn:   0 0 20px rgba(245,158,11,0.25);
+  --shadow-bad:    0 0 20px rgba(239,68,68,0.25);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─────────────────────────────────────────────────────────
+   Base Reset & Body
+───────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background: #0A0A0F;
+  color-scheme: dark;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #0A0A0F;
+  color: #F8FAFC;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 100dvh;
+  /* Bottom-Padding für BottomNav */
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Headings
+───────────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5 {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #F8FAFC;
+}
+
+/* ─────────────────────────────────────────────────────────
+   SpritIQ Custom Utilities
+───────────────────────────────────────────────────────── */
+
+/* Cards */
+.card-surface {
+  background: #111118;
+  border: 1px solid #1E1E2E;
+  border-radius: 16px;
+  transition: all 200ms ease;
+  cursor: pointer;
+}
+.card-surface:hover {
+  border-color: #2A2A3C;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+/* Buttons */
+.btn-primary {
+  background: #22C55E;
+  color: #0A0A0F;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 200ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-primary:hover {
+  background: #16A34A;
+  box-shadow: 0 0 20px rgba(34,197,94,0.35);
+}
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #F8FAFC;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 11px 24px;
+  border-radius: 12px;
+  border: 1px solid #1E1E2E;
+  cursor: pointer;
+  transition: all 200ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-secondary:hover {
+  border-color: #2A2A3C;
+  background: #111118;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #64748B;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+.btn-ghost:hover {
+  color: #F8FAFC;
+  background: rgba(255,255,255,0.05);
+}
+
+/* Preis-Anzeige (JetBrains Mono) */
+.price-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #F8FAFC;
+}
+
+/* Status Farben */
+.status-accent { color: #22C55E; }
+.status-warn   { color: #F59E0B; }
+.status-bad    { color: #EF4444; }
+
+.bg-status-accent { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.25); }
+.bg-status-warn   { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); }
+.bg-status-bad    { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2A2A3C; border-radius: 2px; }
+
+/* ─────────────────────────────────────────────────────────
+   Animations
+───────────────────────────────────────────────────────── */
+@keyframes slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  50%       { box-shadow: 0 0 0 8px rgba(34,197,94,0.15); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up { animation: slide-up 0.35s cubic-bezier(0.32,0.72,0,1); }
+.animate-fade-in  { animation: fade-in 0.4s ease forwards; }
+.animate-pulse-green { animation: pulse-green 2s ease-in-out infinite; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   Leaflet overrides (dark map)
+───────────────────────────────────────────────────────── */
+.leaflet-container {
+  background: #0A0A0F;
+  font-family: 'Inter', sans-serif;
+}
+.leaflet-popup-content-wrapper {
+  background: #111118;
+  border: 1px solid #1E1E2E;
+  border-radius: 12px;
+  color: #F8FAFC;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+.leaflet-popup-tip {
+  background: #111118;
+}
+.leaflet-popup-close-button {
+  color: #64748B !important;
 }
