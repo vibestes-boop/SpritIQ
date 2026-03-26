@@ -112,7 +112,7 @@ export default function HomePage() {
           <div>
             <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "22px", fontWeight: 700, color: "#F8FAFC", letterSpacing: "-0.02em" }}>SpritIQ</h1>
             <p style={{ fontSize: "12px", color: "#64748B", marginTop: "1px" }}>
-              {geo.city ? `${geo.city} · ` : ""}{loading ? "Lade Preise…" : error ? "Offline-Modus" : `${stations.length} Tankstellen`}
+              {loading ? "Lade Preise…" : error ? "Offline-Modus" : `${stations.length} Tankstellen`}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -290,7 +290,7 @@ export default function HomePage() {
             ) : (
               top3.map((station, idx) => {
                 const price  = station[fuelType] as number | false;
-                const status = price ? getPriceStatus(price, fuelType) : "medium";
+                const status = price ? getPriceStatus(price, allPrices) : "medium";
                 return (
                   <Card key={station.id} variant="flat" interactive style={{ padding: "14px 16px" }}>
                     <div className="flex items-center gap-3">
