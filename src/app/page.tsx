@@ -1,8 +1,6 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { MapPin, Navigation, ChevronRight, Zap, RefreshCw, WifiOff, Calculator } from "lucide-react";
+import { MapPin, Navigation, ChevronRight, Zap, RefreshCw, WifiOff, Calculator, Clock } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import Card from "@/components/ui/Card";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -10,9 +8,11 @@ import PriceTag from "@/components/ui/PriceTag";
 import Button from "@/components/ui/Button";
 import DetourModal from "@/components/DetourModal";
 import VoiceButton from "@/components/ui/VoiceButton";
+import PriceChart from "@/components/ui/PriceChart";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { usePrices, getPriceStatus, type FuelType } from "@/hooks/usePrices";
 import { useVehicleProfile } from "@/hooks/useVehicleProfile";
+import { usePriceHistory, getBestTimeAdvice } from "@/hooks/usePriceHistory";
 import type { Station } from "@/app/api/prices/route";
 import type { VoiceCommand } from "@/hooks/useVoice";
 
@@ -84,6 +84,8 @@ export default function HomePage() {
   const [sortMode, setSortMode] = useState<"dist" | "price">("dist");
   const [detourStation, setDetourStation] = useState<Station | null>(null);
   const { profile } = useVehicleProfile();
+  const { addSnapshot, getRecent, getTrend } = usePriceHistory();
+  const bestTime = getBestTimeAdvice();
 
   // Sprachbefehl-Handler
   function handleVoiceCommand(cmd: VoiceCommand) {
@@ -106,6 +108,21 @@ export default function HomePage() {
     .map((s) => s[fuelType] as number | false)
     .filter((p): p is number => typeof p === "number" && p > 0);
   const recommendation = getRecommendation(stations, fuelType);
+
+  // Snapshot speichern wenn neue Preise ankommen
+  useEffect(() => {
+    if (!stations.length) return;
+    const cheapest = stations[0];
+    addSnapshot({
+      e10:     cheapest.e10 || null,
+      e5:      cheapest.e5 || null,
+      diesel:  cheapest.diesel || null,
+      stationId: cheapest.id,
+    });
+  }, [stations, addSnapshot]);
+
+  const recentHistory = getRecent(48);
+  const historyTrend  = getTrend(fuelType);
 
   return (
     <main className="min-h-dvh flex flex-col">
@@ -191,6 +208,46 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
+          )}
+        </Card>
+
+        {/* ── Beste Tankzeit-Widget ── */}
+        <Card variant="flat" style={{ padding: "14px 16px" }}>
+          <div className="flex items-start gap-3">
+            <div style={{
+              width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0,
+              background: `rgba(${bestTime.recommendNow ? "34,197,94" : "239,68,68"},0.1)`,
+              border: `1px solid rgba(${bestTime.recommendNow ? "34,197,94" : "239,68,68"},0.2)`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Clock size={16} color={bestTime.recommendNow ? "#22C55E" : "#EF4444"} />
+            </div>
+            <div className="flex-1">
+              <p style={{ fontSize: "13px", fontWeight: 600, color: bestTime.color, marginBottom: "2px" }}>
+                {bestTime.text}
+              </p>
+              <p style={{ fontSize: "11px", color: "#64748B" }}>{bestTime.weekdayTip}</p>
+            </div>
+          </div>
+
+          {/* Sparkline Chart */}
+          {recentHistory.length >= 2 && (
+            <div style={{ marginTop: "12px" }}>
+              <p style={{ fontSize: "10px", color: "#64748B", fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: "6px" }}>
+                {fuelType.toUpperCase()} Verlauf · {recentHistory.length} Messpunkte
+              </p>
+              <PriceChart
+                snapshots={recentHistory}
+                fuelKey={fuelType === "e5" ? "e5" : fuelType === "diesel" ? "diesel" : "e10"}
+                color={historyTrend === "down" ? "#22C55E" : historyTrend === "up" ? "#EF4444" : "#F59E0B"}
+                height={72}
+              />
+            </div>
+          )}
+          {recentHistory.length < 2 && (
+            <p style={{ fontSize: "11px", color: "#475569", marginTop: "8px" }}>
+              📊 Preisverlauf erscheint nach dem ersten Tankstopp-Check
+            </p>
           )}
         </Card>
 
