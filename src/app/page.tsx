@@ -9,10 +9,12 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import PriceTag from "@/components/ui/PriceTag";
 import Button from "@/components/ui/Button";
 import DetourModal from "@/components/DetourModal";
+import VoiceButton from "@/components/ui/VoiceButton";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { usePrices, getPriceStatus, type FuelType } from "@/hooks/usePrices";
 import { useVehicleProfile } from "@/hooks/useVehicleProfile";
 import type { Station } from "@/app/api/prices/route";
+import type { VoiceCommand } from "@/hooks/useVoice";
 
 const FUEL_TYPES: { key: FuelType; label: string }[] = [
   { key: "e10",    label: "E10"    },
@@ -83,6 +85,13 @@ export default function HomePage() {
   const [detourStation, setDetourStation] = useState<Station | null>(null);
   const { profile } = useVehicleProfile();
 
+  // Sprachbefehl-Handler
+  function handleVoiceCommand(cmd: VoiceCommand) {
+    if (cmd.type === "FUEL_TYPE") setFuelType(cmd.value);
+    if (cmd.type === "SORT")      setSortMode(cmd.by);
+    if (cmd.type === "REFRESH")   refresh();
+  }
+
   const geo = useGeolocation();
   const { stations, loading, error, source, refresh } = usePrices({
     lat: geo.lat,
@@ -124,51 +133,13 @@ export default function HomePage() {
         </div>
         <div className="flex items-center gap-2">
           {source === "demo" && (
-            <span
-              style={{
-                fontSize: "10px",
-                color: "#F59E0B",
-                background: "rgba(245,158,11,0.12)",
-                border: "1px solid rgba(245,158,11,0.25)",
-                borderRadius: "6px",
-                padding: "2px 8px",
-                fontWeight: 600,
-              }}
-            >
-              DEMO
-            </span>
+            <span style={{ fontSize: "10px", color: "#F59E0B", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "6px", padding: "2px 8px", fontWeight: 600 }}>DEMO</span>
           )}
-          <button
-            onClick={refresh}
-            style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "10px",
-              background: "#111118",
-              border: "1px solid #1E1E2E",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-            }}
-            aria-label="Preise aktualisieren"
-          >
+          <VoiceButton onCommand={handleVoiceCommand} size="sm" />
+          <button onClick={refresh} style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#111118", border: "1px solid #1E1E2E", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} aria-label="Preise aktualisieren">
             <RefreshCw size={16} color="#64748B" />
           </button>
-          <button
-            style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "10px",
-              background: "#111118",
-              border: "1px solid #1E1E2E",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-            }}
-            aria-label="Standort"
-          >
+          <button style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#111118", border: "1px solid #1E1E2E", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} aria-label="Standort">
             <MapPin size={16} color={geo.error ? "#EF4444" : "#64748B"} />
           </button>
         </div>
