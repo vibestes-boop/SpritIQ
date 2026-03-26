@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { MapPin, Navigation, ChevronRight, Zap, RefreshCw, WifiOff, Calculator, Clock } from "lucide-react";
