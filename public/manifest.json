@@ -1,0 +1,43 @@
+{
+  "name": "SpritIQ — KI-Spritpreise",
+  "short_name": "SpritIQ",
+  "description": "KI-gestützte Spritpreis-App für Deutschland — Tankstellen in der Nähe, AI-Analyse und Umweg-Rechner",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0A0F",
+  "theme_color": "#0A0A0F",
+  "orientation": "portrait",
+  "lang": "de",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["navigation", "utilities"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Karte öffnen",
+      "short_name": "Karte",
+      "description": "Tankstellen auf der Karte anzeigen",
+      "url": "/karte",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "KI-Briefing",
+      "short_name": "Briefing",
+      "description": "Tägliche KI-Analyse der Spritpreise",
+      "url": "/briefing",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

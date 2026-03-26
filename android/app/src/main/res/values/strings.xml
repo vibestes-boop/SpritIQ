@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SpritIQ</string>
+    <string name="title_activity_main">SpritIQ</string>
+    <string name="package_name">de.spritiq.app</string>
+    <string name="custom_url_scheme">de.spritiq.app</string>
+</resources>
