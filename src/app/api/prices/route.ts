@@ -19,101 +19,9 @@ export interface Station {
 export interface PricesResponse {
   ok: boolean;
   stations: Station[];
-  source: "api" | "demo";
+  source: "api";
   updatedAt: string;
-}
-
-// ─── Demo-Daten (wenn kein API-Key vorhanden) ────────────────────────────────
-function getDemoStations(lat: number, lng: number): Station[] {
-  // Zufällige kleine Preisschwankungen für realistische Demo
-  const jitter = () => Math.round((Math.random() * 0.04 - 0.02) * 1000) / 1000;
-
-  return [
-    {
-      id: "demo-1",
-      name: "Shell Station Hauptstraße",
-      brand: "Shell",
-      street: "Hauptstraße 12",
-      place: "München",
-      lat: lat + 0.008,
-      lng: lng + 0.005,
-      dist: 0.9,
-      e5:    1.789 + jitter(),
-      e10:   1.739 + jitter(),
-      diesel: 1.659 + jitter(),
-      isOpen: true,
-    },
-    {
-      id: "demo-2",
-      name: "Aral Tankstelle Mitte",
-      brand: "Aral",
-      street: "Leopoldstraße 88",
-      place: "München",
-      lat: lat + 0.015,
-      lng: lng + 0.012,
-      dist: 1.7,
-      e5:    1.809 + jitter(),
-      e10:   1.759 + jitter(),
-      diesel: 1.679 + jitter(),
-      isOpen: true,
-    },
-    {
-      id: "demo-3",
-      name: "JET Westend",
-      brand: "JET",
-      street: "Landsberger Str. 55",
-      place: "München",
-      lat: lat - 0.012,
-      lng: lng - 0.008,
-      dist: 2.1,
-      e5:    1.769 + jitter(),
-      e10:   1.719 + jitter(),
-      diesel: 1.639 + jitter(),
-      isOpen: true,
-    },
-    {
-      id: "demo-4",
-      name: "AVIA Schwabing",
-      brand: "AVIA",
-      street: "Schwabing Str. 21",
-      place: "München",
-      lat: lat + 0.022,
-      lng: lng + 0.003,
-      dist: 2.5,
-      e5:    1.819 + jitter(),
-      e10:   1.769 + jitter(),
-      diesel: 1.689 + jitter(),
-      isOpen: true,
-    },
-    {
-      id: "demo-5",
-      name: "Total Energies Maxvorstadt",
-      brand: "TotalEnergies",
-      street: "Maxvorstadt 14",
-      place: "München",
-      lat: lat - 0.007,
-      lng: lng + 0.015,
-      dist: 3.2,
-      e5:    1.849 + jitter(),
-      e10:   1.799 + jitter(),
-      diesel: 1.719 + jitter(),
-      isOpen: false,
-    },
-    {
-      id: "demo-6",
-      name: "bft Haidhausen",
-      brand: "bft",
-      street: "Haidhauser Ring 7",
-      place: "München",
-      lat: lat - 0.018,
-      lng: lng + 0.022,
-      dist: 4.0,
-      e5:    1.779 + jitter(),
-      e10:   1.729 + jitter(),
-      diesel: 1.649 + jitter(),
-      isOpen: true,
-    },
-  ];
+  error?: string;
 }
 
 // ─── GET /api/prices ─────────────────────────────────────────────────────────
@@ -122,7 +30,6 @@ export async function GET(req: NextRequest) {
   const lat = parseFloat(searchParams.get("lat") ?? "48.1374");
   const lng = parseFloat(searchParams.get("lng") ?? "11.5755");
   const rad = parseFloat(searchParams.get("rad") ?? "10"); // 10km default
-  const sort = searchParams.get("sort") ?? "dist";
   const type = searchParams.get("type") ?? "all";
 
   const apiKey = process.env.TANKERKOENIG_API_KEY;
@@ -211,35 +118,16 @@ export async function GET(req: NextRequest) {
       });
     } catch (err) {
       console.error("[prices] Tankerkönig error:", err);
-      // Fallback auf Demo-Daten wenn API versagt
+      return NextResponse.json(
+        { ok: false, error: "Preisdaten momentan nicht verfügbar. Bitte versuche es erneut." },
+        { status: 503 }
+      );
     }
   }
 
-  // ── Demo-Fallback ────────────────────────────────────────────────────────
-  const stations = getDemoStations(lat, lng);
-
-  // Sortierung
-  if (sort === "price") {
-    const fuelKey = type === "diesel" ? "diesel" : type === "e5" ? "e5" : "e10";
-    stations.sort((a, b) => {
-      const ap = a[fuelKey as keyof Station] as number | false;
-      const bp = b[fuelKey as keyof Station] as number | false;
-      if (!ap) return 1;
-      if (!bp) return -1;
-      return ap - bp;
-    });
-  } else {
-    stations.sort((a, b) => a.dist - b.dist);
-  }
-
-  const response: PricesResponse = {
-    ok: true,
-    stations,
-    source: "demo",
-    updatedAt: new Date().toISOString(),
-  };
-
-  return NextResponse.json(response, {
-    headers: { "Cache-Control": "no-store" }, // Demo: kein Caching
-  });
+  // Kein API-Key konfiguriert
+  return NextResponse.json(
+    { ok: false, error: "API-Key nicht konfiguriert." },
+    { status: 503 }
+  );
 }

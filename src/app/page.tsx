@@ -86,7 +86,7 @@ export default function HomePage() {
   const effectiveLng = manualLocation?.lng ?? geo.lng;
   const hasLocation = effectiveLat !== null && effectiveLng !== null;
 
-  const { stations, loading, error, source, refresh } = usePrices({
+  const { stations, loading, error, refresh } = usePrices({
     lat: effectiveLat ?? 48.1374,
     lng: effectiveLng ?? 11.5755,
     fuelType,
@@ -141,9 +141,7 @@ export default function HomePage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {source === "demo" && (
-              <span style={{ fontSize: "10px", color: "#F59E0B", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "6px", padding: "2px 8px", fontWeight: 600 }}>DEMO</span>
-            )}
+
             <VoiceButton onCommand={handleVoiceCommand} size="sm" />
             {/* Bell/Alarm */}
             <button
