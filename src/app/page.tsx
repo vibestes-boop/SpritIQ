@@ -27,6 +27,7 @@ import VoiceButton from "@/components/ui/VoiceButton";
 import PriceChart from "@/components/ui/PriceChart";
 import { AlarmToast, AlarmItem } from "@/components/ui/AlarmUI";
 import { LocationPrompt } from "@/components/ui/LocationPrompt";
+import StationSheet from "@/components/ui/StationSheet";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { usePrices, getPriceStatus, type FuelType } from "@/hooks/usePrices";
 import { useVehicleProfile } from "@/hooks/useVehicleProfile";
@@ -135,6 +136,7 @@ export default function HomePage() {
   const [fuelType, setFuelType] = useState<FuelType>("e10");
   const [sortMode, setSortMode] = useState<"dist" | "price">("dist");
   const [detourStation, setDetourStation] = useState<Station | null>(null);
+  const [selectedStation, setSelectedStation] = useState<Station | null>(null);
   const [showAlarmPanel, setShowAlarmPanel] = useState(false);
   const [alarmThreshold, setAlarmThreshold] = useState(1.7);
 
@@ -829,6 +831,7 @@ export default function HomePage() {
                   const status = price ? getPriceStatus(price, allPrices) : "medium";
                   return (
                     <div key={station.id}
+                      onClick={() => setSelectedStation(station)}
                       style={{
                         padding: "14px 16px",
                         background: "#111118",
@@ -836,7 +839,10 @@ export default function HomePage() {
                         borderBottom: idx === top3.length - 1 ? "1px solid #1E1E2E" : "none",
                         cursor: "pointer",
                         transition: "background 150ms",
+                        WebkitTapHighlightColor: "transparent",
                       }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#16161F")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "#111118")}
                     >
                       <div className="flex items-center gap-3">
                         {/* Rang */}
@@ -941,6 +947,13 @@ export default function HomePage() {
       </main>
 
       {/* Umweg-Rechner Modal */}
+      <StationSheet
+        station={selectedStation}
+        onClose={() => setSelectedStation(null)}
+        onToggleFavorite={toggleFavorite}
+        isFavorite={isFavorite}
+      />
+
       {detourStation &&
         top3[0] &&
         (() => {
