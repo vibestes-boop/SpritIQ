@@ -35,6 +35,7 @@ export default function MapClient() {
   } | null>(null);
 
   const geo = useGeolocation();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Suchkoordinaten: mapCenter (wenn Karte bewegt) oder GPS
   const searchLat = mapCenter?.lat ?? geo.lat ?? 48.1374;
   const searchLng = mapCenter?.lng ?? geo.lng ?? 11.5755;
@@ -42,6 +43,7 @@ export default function MapClient() {
     lat: searchLat,
     lng: searchLng,
     fuelType,
+    radius: 25, // 25km Radius — maximal bei Tankerkönig, damit Marker beim Panning sichtbar bleiben
     refreshInterval: 5 * 60 * 1000,
   });
 
@@ -90,11 +92,15 @@ export default function MapClient() {
       L.control.zoom({ position: "bottomright" }).addTo(map);
       mapRef.current = map;
 
-      // Beim Bewegen: mapCenter aktualisieren und Button zeigen
+      // Beim Bewegen: mapCenter mit 800ms Debounce aktualisieren
+      // so wird die API erst nach dem Stop beim Panning aufgerufen
       map.on("moveend", () => {
-        const center = map.getCenter();
-        setMapCenter({ lat: center.lat, lng: center.lng });
-        setMapMoved(true);
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+          const center = map.getCenter();
+          setMapCenter({ lat: center.lat, lng: center.lng });
+          setMapMoved(true);
+        }, 800);
       });
 
       // ResizeObserver: invalidateSize bei Container-Größenänderung
