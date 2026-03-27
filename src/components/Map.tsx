@@ -268,6 +268,40 @@ export default function MapClient() {
         </div>
       )}
 
+      {/* ── „Mein Standort"-Button (unten rechts, wie Google Maps) ── */}
+      {!geo.loading && (geo.lat || geo.lng) && (
+        <button
+          onClick={() => {
+            if (mapRef.current && geo.lat && geo.lng) {
+              mapRef.current.panTo([geo.lat, geo.lng], { animate: true });
+              setMapCenter(null);   // zurück zu GPS-Koordinaten
+              setMapMoved(false);   // "In diesem Bereich"-Button ausblenden
+            }
+          }}
+          title="Mein Standort"
+          style={{
+            position:       "absolute",
+            bottom:         "96px",   // über den Zoom-Controls
+            right:          "12px",
+            width:          "44px",
+            height:         "44px",
+            borderRadius:   "50%",
+            background:     "rgba(17,17,24,0.95)",
+            border:         "1px solid #2A2A3C",
+            display:        "flex",
+            alignItems:     "center",
+            justifyContent: "center",
+            cursor:         "pointer",
+            zIndex:         999,
+            backdropFilter: "blur(12px)",
+            boxShadow:      "0 2px 12px rgba(0,0,0,0.5)",
+            transition:     "all 200ms ease",
+          }}
+        >
+          <Navigation size={18} color="#3B82F6" fill="rgba(59,130,246,0.15)" />
+        </button>
+      )}
+
       {/* ── Bottom Sheet ── */}
       {selected && (
         <div
