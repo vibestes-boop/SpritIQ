@@ -30,8 +30,8 @@ export default function MapClient() {
 
   const geo = useGeolocation();
   const { stations, loading } = usePrices({
-    lat: geo.lat,
-    lng: geo.lng,
+    lat: geo.lat ?? 48.1374,
+    lng: geo.lng ?? 11.5755,
     fuelType,
     refreshInterval: 5 * 60 * 1000,
   });
@@ -53,7 +53,7 @@ export default function MapClient() {
       });
 
       const map = L.map(containerRef.current!, {
-        center:           [geo.lat, geo.lng],
+        center:           [geo.lat ?? 48.1374, geo.lng ?? 11.5755],
         zoom:             13,
         zoomControl:      false,
         attributionControl: true,
@@ -88,10 +88,10 @@ export default function MapClient() {
         iconSize:  [14, 14],
         iconAnchor:[7, 7],
       });
-      L.marker([geo.lat, geo.lng], { icon: userIcon })
+      L.marker([geo.lat ?? 48.1374, geo.lng ?? 11.5755], { icon: userIcon })
         .addTo(mapRef.current)
         .bindTooltip("Mein Standort", { permanent: false });
-      mapRef.current.panTo([geo.lat, geo.lng], { animate: true });
+      mapRef.current.panTo([geo.lat ?? 48.1374, geo.lng ?? 11.5755], { animate: true });
     });
   }, [geo.lat, geo.lng, geo.loading]);
 
