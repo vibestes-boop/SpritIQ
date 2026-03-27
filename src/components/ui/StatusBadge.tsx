@@ -84,7 +84,12 @@ export default function StatusBadge({
         }}
       >
         {showIcon && (
-          <Icon size={s.iconSize} color={cfg.color} strokeWidth={2.5} aria-hidden="true" />
+          <Icon
+            size={s.iconSize}
+            color={cfg.color}
+            strokeWidth={2.5}
+            aria-hidden="true"
+          />
         )}
         <span
           style={{

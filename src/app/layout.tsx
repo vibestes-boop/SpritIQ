@@ -20,11 +20,19 @@ export const metadata: Metadata = {
   title: "SpritIQ — KI-Spritpreise in Deutschland",
   description:
     "SpritIQ zeigt dir nicht nur Spritpreise — es erklärt WARUM, WOHIN und WANN du tanken solltest. KI-gestützte Analyse, Echtzeit-Preise und Spracheingabe.",
-  keywords: ["Spritpreise", "Benzinpreise", "Diesel", "Tankstellen", "KI", "Deutschland"],
+  keywords: [
+    "Spritpreise",
+    "Benzinpreise",
+    "Diesel",
+    "Tankstellen",
+    "KI",
+    "Deutschland",
+  ],
   authors: [{ name: "SpritIQ" }],
   openGraph: {
     title: "SpritIQ — KI-Spritpreise",
-    description: "Die erste deutsche Spritpreis-App die erklärt, analysiert und vorhersagt.",
+    description:
+      "Die erste deutsche Spritpreis-App die erklärt, analysiert und vorhersagt.",
     type: "website",
     locale: "de_DE",
   },

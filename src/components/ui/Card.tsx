@@ -45,9 +45,9 @@ export default function Card({
 
   const glows: Record<string, string> = {
     accent: "0 0 20px rgba(34,197,94,0.15)",
-    warn:   "0 0 20px rgba(245,158,11,0.15)",
-    bad:    "0 0 20px rgba(239,68,68,0.15)",
-    none:   "none",
+    warn: "0 0 20px rgba(245,158,11,0.15)",
+    bad: "0 0 20px rgba(239,68,68,0.15)",
+    none: "none",
   };
 
   return (

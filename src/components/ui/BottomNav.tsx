@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { Home, Map, BookOpen, Settings } from "lucide-react";
 
 const tabs = [
-  { href: "/",           label: "Home",        Icon: Home      },
-  { href: "/karte",      label: "Karte",       Icon: Map       },
-  { href: "/briefing",   label: "Briefing",    Icon: BookOpen  },
+  { href: "/", label: "Home", Icon: Home },
+  { href: "/karte", label: "Karte", Icon: Map },
+  { href: "/briefing", label: "Briefing", Icon: BookOpen },
   { href: "/einstellungen", label: "Einstellungen", Icon: Settings },
 ];
 

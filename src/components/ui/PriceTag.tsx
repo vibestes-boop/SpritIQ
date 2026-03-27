@@ -26,14 +26,18 @@ export default function PriceTag({
   // Format: "1,72" + "9" (Zehntel-Cent separat kleiner)
   const priceStr = price.toFixed(3).replace(".", ",");
   const mainPart = priceStr.slice(0, -1); // "1,72"
-  const lastDigit = priceStr.slice(-1);   // "9"
+  const lastDigit = priceStr.slice(-1); // "9"
 
-  const deltaSign = delta !== undefined ? (delta > 0 ? "+" : delta < 0 ? "" : "±") : null;
+  const deltaSign =
+    delta !== undefined ? (delta > 0 ? "+" : delta < 0 ? "" : "±") : null;
   const deltaColor =
-    delta === undefined ? "#64748B"
-    : delta < 0 ? "#22C55E"
-    : delta > 0 ? "#EF4444"
-    : "#64748B";
+    delta === undefined
+      ? "#64748B"
+      : delta < 0
+        ? "#22C55E"
+        : delta > 0
+          ? "#EF4444"
+          : "#64748B";
 
   return (
     <div className="flex items-end gap-2">
@@ -91,7 +95,8 @@ export default function PriceTag({
               color: deltaColor,
             }}
           >
-            {deltaSign}{Math.abs(delta)}ct
+            {deltaSign}
+            {Math.abs(delta)}ct
           </span>
         )}
       </div>
