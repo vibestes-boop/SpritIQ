@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { MapPin, Navigation, ChevronRight, Zap, RefreshCw, WifiOff, Calculator, Clock, Bell, Plus, Minus } from "lucide-react";
+import { MapPin, Navigation, ChevronRight, Zap, RefreshCw, WifiOff, Calculator, Clock, Bell, Plus, Minus, Star, Share2 } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import Card from "@/components/ui/Card";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -17,6 +17,7 @@ import { usePrices, getPriceStatus, type FuelType } from "@/hooks/usePrices";
 import { useVehicleProfile } from "@/hooks/useVehicleProfile";
 import { usePriceHistory, getBestTimeAdvice } from "@/hooks/usePriceHistory";
 import { useAlarm } from "@/hooks/useAlarm";
+import { useFavorites, shareStation } from "@/hooks/useFavorites";
 import type { Station } from "@/app/api/prices/route";
 import type { VoiceCommand } from "@/hooks/useVoice";
 
@@ -66,6 +67,8 @@ export default function HomePage() {
   const { addSnapshot, getRecent, getTrend }  = usePriceHistory();
   const bestTime                              = getBestTimeAdvice();
   const { alarms, triggered, addAlarm, removeAlarm, toggleAlarm, checkAlarms, dismissTriggered } = useAlarm();
+  const { isFavorite, toggle: toggleFavorite } = useFavorites();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Spracheingabe
   function handleVoiceCommand(cmd: VoiceCommand) {
@@ -312,7 +315,7 @@ export default function HomePage() {
                           )}
                         </div>
                       </div>
-                      {/* Preis + Status */}
+                      {/* Preis + Aktionen */}
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {price ? (
                           <PriceTag price={price} fuelType={fuelType === "e10" ? "E10" : fuelType === "e5" ? "E5" : "Diesel"} size="sm" />
@@ -320,6 +323,31 @@ export default function HomePage() {
                           <span style={{ fontSize: "12px", color: "#64748B" }}>–</span>
                         )}
                         <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: status === "good" ? "#22C55E" : status === "medium" ? "#F59E0B" : "#EF4444", flexShrink: 0 }} />
+
+                        {/* Favorit */}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleFavorite(station.id); }}
+                          title={isFavorite(station.id) ? "Aus Favoriten entfernen" : "Als Favorit speichern"}
+                          style={{ width: "28px", height: "28px", borderRadius: "8px", background: isFavorite(station.id) ? "rgba(245,158,11,0.12)" : "#16161F", border: `1px solid ${isFavorite(station.id) ? "rgba(245,158,11,0.3)" : "#2A2A3C"}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all 200ms" }}
+                        >
+                          <Star size={13} color={isFavorite(station.id) ? "#F59E0B" : "#475569"} fill={isFavorite(station.id) ? "#F59E0B" : "none"} />
+                        </button>
+
+                        {/* Teilen */}
+                        {price && (
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const shared = await shareStation({ stationName: station.brand || station.name, price, fuelType: fuelType === "e10" ? "E10" : fuelType === "e5" ? "E5" : "Diesel", address: station.street, dist: station.dist });
+                              if (shared && !navigator.share) { setCopiedId(station.id); setTimeout(() => setCopiedId(null), 2000); }
+                            }}
+                            title="Teilen"
+                            style={{ width: "28px", height: "28px", borderRadius: "8px", background: copiedId === station.id ? "rgba(34,197,94,0.12)" : "#16161F", border: `1px solid ${copiedId === station.id ? "rgba(34,197,94,0.3)" : "#2A2A3C"}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
+                          >
+                            <Share2 size={13} color={copiedId === station.id ? "#22C55E" : "#475569"} />
+                          </button>
+                        )}
+
                         {idx > 0 && price && (
                           <button onClick={(e) => { e.stopPropagation(); setDetourStation(station); }} title="Umweg-Rechner" style={{ width: "28px", height: "28px", borderRadius: "8px", background: "#16161F", border: "1px solid #2A2A3C", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
                             <Calculator size={13} color="#64748B" />
