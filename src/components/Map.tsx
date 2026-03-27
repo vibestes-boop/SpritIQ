@@ -41,8 +41,11 @@ export default function MapClient() {
     if (!containerRef.current || mapRef.current) return;
     let isMounted = true;
 
-    import("leaflet").then((L) => {
+    import("leaflet").then(async (L) => {
       if (!isMounted || !containerRef.current || mapRef.current) return;
+
+      // Leaflet CSS dynamisch laden (Next.js braucht das)
+      await import("leaflet/dist/leaflet.css" as string);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -67,6 +70,9 @@ export default function MapClient() {
 
       L.control.zoom({ position: "bottomright" }).addTo(map);
       mapRef.current = map;
+
+      // invalidateSize nach kurzer Verzögerung — Next.js layout shift fix
+      setTimeout(() => { map.invalidateSize(); }, 300);
     });
 
     return () => {
