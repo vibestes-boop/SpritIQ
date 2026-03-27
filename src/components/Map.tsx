@@ -1,5 +1,6 @@
 "use client";
 
+import "leaflet/dist/leaflet.css"; // MUSS statisch importiert werden — dynamischer Import funktioniert nicht
 import { useEffect, useRef, useState } from "react";
 import type { Map as LeafletMap } from "leaflet";
 import { X, Navigation, ChevronUp } from "lucide-react";
@@ -46,11 +47,8 @@ export default function MapClient() {
     if (!containerRef.current || mapRef.current) return;
     let isMounted = true;
 
-    import("leaflet").then(async (L) => {
+    import("leaflet").then((L) => {
       if (!isMounted || !containerRef.current || mapRef.current) return;
-
-      // Leaflet CSS dynamisch laden (Next.js braucht das)
-      await import("leaflet/dist/leaflet.css" as string);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -83,8 +81,15 @@ export default function MapClient() {
         setMapMoved(true);
       });
 
-      // invalidateSize nach kurzer Verzögerung — Next.js layout shift fix
-      setTimeout(() => { map.invalidateSize(); }, 300);
+      // ResizeObserver: invalidateSize bei Container-Größenänderung
+      const ro = new ResizeObserver(() => map.invalidateSize());
+      if (containerRef.current) ro.observe(containerRef.current);
+
+      // Sofortiger invalidateSize + Fallback nach 500ms
+      map.invalidateSize();
+      setTimeout(() => { if (isMounted) map.invalidateSize(); }, 500);
+
+      return () => ro.disconnect();
     });
 
     return () => {
