@@ -74,6 +74,8 @@ html {
   background: #0A0A0F;
   color-scheme: dark;
   -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden; /* iOS Safari: html MUSS auch gesperrt sein, body allein reicht nicht */
+  max-width: 100%;
 }
 
 body {
@@ -86,6 +88,8 @@ body {
   /* Bottom-Padding für BottomNav */
   padding-bottom: calc(80px + env(safe-area-inset-bottom));
   overflow-x: hidden;
+  max-width: 100%;
+  position: relative;
 }
 
 /* ─────────────────────────────────────────────────────────
