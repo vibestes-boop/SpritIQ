@@ -174,7 +174,7 @@ export default function HomePage() {
   const effectiveLng = manualLocation?.lng ?? geo.lng;
   const hasLocation = effectiveLat !== null && effectiveLng !== null;
 
-  const { stations, loading, error, refresh, updatedAt, source } = usePrices({
+  const { stations, rawStations, loading, error, refresh, updatedAt, source } = usePrices({
     lat: effectiveLat ?? 48.1374,
     lng: effectiveLng ?? 11.5755,
     fuelType,
@@ -224,9 +224,11 @@ export default function HomePage() {
   }, [updatedAt]);
 
   // Snapshot + Alarme prüfen
+  // WICHTIG: rawStations (nicht stations) nutzen — rawStations ändert sich nur bei
+  // echtem API-Fetch, nicht bei Sort-Wechsel. Verhindert den addSnapshot/PriceChart-Crash.
   useEffect(() => {
-    if (!stations.length) return;
-    const cheapest = stations[0];
+    if (!rawStations.length) return;
+    const cheapest = rawStations[0]; // günstigste nach Distanz (API-Reihenfolge)
     addSnapshot({
       e10: cheapest.e10 || null,
       e5: cheapest.e5 || null,
@@ -247,7 +249,7 @@ export default function HomePage() {
       }
     }
     checkAlarms(prices);
-  }, [stations, addSnapshot, checkAlarms]);
+  }, [rawStations, addSnapshot, checkAlarms]);
 
   const recentHistory = getRecent(48);
   const historyTrend = getTrend(fuelType);

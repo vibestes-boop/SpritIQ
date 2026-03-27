@@ -17,7 +17,8 @@ interface UsePricesOptions {
 }
 
 interface UsePricesResult {
-  stations: Station[];
+  stations: Station[];     // sortiert (für Anzeige)
+  rawStations: Station[];  // API-Reihenfolge (für Snapshots/Effekte)
   loading: boolean;
   error: string | null;
   source: "api" | "cached" | null;
@@ -143,6 +144,7 @@ export function usePrices({
 
   return {
     stations,
+    rawStations: allStations, // stabile Referenz — ändert sich nur bei neuem API-Fetch
     loading,
     error,
     source: meta.source,
