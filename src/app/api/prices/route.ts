@@ -121,9 +121,9 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const lat = parseFloat(searchParams.get("lat") ?? "48.1374");
   const lng = parseFloat(searchParams.get("lng") ?? "11.5755");
-  const rad = parseFloat(searchParams.get("rad") ?? "5");
-  const sort = searchParams.get("sort") ?? "dist"; // dist | price
-  const type = searchParams.get("type") ?? "all";  // all | e5 | e10 | diesel
+  const rad = parseFloat(searchParams.get("rad") ?? "10"); // 10km default
+  const sort = searchParams.get("sort") ?? "dist";
+  const type = searchParams.get("type") ?? "all";
 
   const apiKey = process.env.TANKERKOENIG_API_KEY;
 
@@ -149,35 +149,42 @@ export async function GET(req: NextRequest) {
       if (!data.ok) throw new Error(data.message ?? "Tankerkönig error");
 
       // Normalisiere Tankerkönig-Format → unser Station-Format
-      const stations: Station[] = (data.stations ?? []).map(
-        (s: {
-          id: string;
-          name: string;
-          brand: string;
-          street: string;
-          place: string;
-          lat: number;
-          lng: number;
-          dist: number;
-          e5: number | false;
-          e10: number | false;
-          diesel: number | false;
-          isOpen: boolean;
-        }) => ({
-          id: s.id,
-          name: s.name ?? s.brand,
-          brand: s.brand,
-          street: s.street,
-          place: s.place,
-          lat: s.lat,
-          lng: s.lng,
-          dist: s.dist,
-          e5: s.e5,
-          e10: s.e10,
-          diesel: s.diesel,
-          isOpen: s.isOpen,
-        })
-      );
+      const stations: Station[] = (data.stations ?? [])
+        .map(
+          (s: {
+            id: string;
+            name: string;
+            brand: string;
+            street: string;
+            place: string;
+            lat: number;
+            lng: number;
+            dist: number;
+            e5: number | false | null;
+            e10: number | false | null;
+            diesel: number | false | null;
+            isOpen: boolean;
+          }) => ({
+            id: s.id,
+            name: s.name ?? s.brand,
+            brand: s.brand,
+            street: s.street,
+            place: s.place,
+            lat: s.lat,
+            lng: s.lng,
+            dist: s.dist,
+            e5: s.e5 || false,
+            e10: s.e10 || false,
+            diesel: s.diesel || false,
+            isOpen: s.isOpen,
+          })
+        )
+        // Nur Stationen mit mindestens einem Preis anzeigen
+        .filter((s: Station) =>
+          (typeof s.e5 === "number" && s.e5 > 0) ||
+          (typeof s.e10 === "number" && s.e10 > 0) ||
+          (typeof s.diesel === "number" && s.diesel > 0)
+        );
 
       const response: PricesResponse = {
         ok: true,
