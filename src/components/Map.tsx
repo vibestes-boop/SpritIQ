@@ -100,9 +100,11 @@ export default function MapClient() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── User-Standort Marker ─────────────────────────────────────────────────
+  // ── User-Standort Marker (nur wenn echtes GPS vorhanden) ─────────────────
   useEffect(() => {
-    if (!mapRef.current || geo.loading) return;
+    if (!mapRef.current || geo.loading || !geo.lat || !geo.lng) return; // Kein Fallback-Marker
+    const userLat = geo.lat;
+    const userLng = geo.lng;
     import("leaflet").then((L) => {
       if (!mapRef.current) return;
       const userIcon = L.divIcon({
@@ -111,10 +113,10 @@ export default function MapClient() {
         iconSize:  [14, 14],
         iconAnchor:[7, 7],
       });
-      L.marker([geo.lat ?? 48.1374, geo.lng ?? 11.5755], { icon: userIcon })
+      L.marker([userLat, userLng], { icon: userIcon })
         .addTo(mapRef.current)
         .bindTooltip("Mein Standort", { permanent: false });
-      mapRef.current.panTo([geo.lat ?? 48.1374, geo.lng ?? 11.5755], { animate: true });
+      mapRef.current.panTo([userLat, userLng], { animate: true });
     });
   }, [geo.lat, geo.lng, geo.loading]);
 
