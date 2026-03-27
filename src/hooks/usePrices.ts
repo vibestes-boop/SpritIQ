@@ -20,7 +20,7 @@ interface UsePricesResult {
   stations: Station[];
   loading: boolean;
   error: string | null;
-  source: "api" | "demo" | null;
+  source: "api" | "cached" | null;
   updatedAt: string | null;
   refresh: () => void;
 }
@@ -50,7 +50,7 @@ export function usePrices({
 }: UsePricesOptions): UsePricesResult {
   const [data, setData] = useState<{
     stations: Station[];
-    source: "api" | "demo" | null;
+    source: "api" | "cached" | null;
     updatedAt: string | null;
   }>({ stations: [], source: null, updatedAt: null });
   const [loading, setLoading] = useState(true);
