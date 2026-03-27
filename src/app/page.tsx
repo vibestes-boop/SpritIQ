@@ -82,9 +82,19 @@ export default function HomePage() {
     lat: geo.lat, lng: geo.lng, fuelType, sortMode, refreshInterval: 5 * 60 * 1000,
   });
 
+  // Effektiver Kraftstoff: wechselt automatisch wenn gewählter Typ keine Preise hat
+  const effectiveFuelType = ((): FuelType => {
+    if (!stations.length) return fuelType;
+    const hasPrice = (ft: FuelType) => stations.some(s => { const p = s[ft]; return typeof p === "number" && p > 0; });
+    if (hasPrice(fuelType)) return fuelType;
+    const order: FuelType[] = fuelType === "e10" ? ["e5", "diesel"] : fuelType === "e5" ? ["diesel", "e10"] : ["e5", "e10"];
+    return order.find(hasPrice) ?? fuelType;
+  })();
+  const noFuelHint = !loading && stations.length > 0 && effectiveFuelType !== fuelType;
+
   const top3        = stations.slice(0, 3);
-  const allPrices   = stations.map((s) => s[fuelType] as number | false).filter((p): p is number => typeof p === "number" && p > 0);
-  const recommendation = getRecommendation(stations, fuelType);
+  const allPrices   = stations.map((s) => s[effectiveFuelType] as number | false).filter((p): p is number => typeof p === "number" && p > 0);
+  const recommendation = getRecommendation(stations, effectiveFuelType);
 
   // Snapshot + Alarme prüfen
   useEffect(() => {
@@ -245,6 +255,16 @@ export default function HomePage() {
             ))}
           </div>
 
+          {/* ── Auto-Fallback Hinweis ── */}
+          {noFuelHint && (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "10px" }}>
+              <span style={{ fontSize: "13px" }}>ℹ️</span>
+              <p style={{ fontSize: "11px", color: "#F59E0B" }}>
+                {fuelType.toUpperCase()} nicht verfügbar in deiner Nähe — zeige {effectiveFuelType.toUpperCase()}-Preise
+              </p>
+            </div>
+          )}
+
           {/* ── Sortierung ── */}
           <div style={{ display: "flex", gap: "8px" }}>
             {[{ key: "dist", label: "Entfernung" }, { key: "price", label: "Preis" }].map(({ key, label }) => (
@@ -292,7 +312,7 @@ export default function HomePage() {
               </Card>
             ) : (
               top3.map((station, idx) => {
-                const price  = station[fuelType] as number | false;
+                const price  = station[effectiveFuelType] as number | false;
                 const status = price ? getPriceStatus(price, allPrices) : "medium";
                 return (
                   <Card key={station.id} variant="flat" interactive style={{ padding: "14px 16px" }}>
@@ -318,7 +338,7 @@ export default function HomePage() {
                       {/* Preis + Aktionen */}
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {price ? (
-                          <PriceTag price={price} fuelType={fuelType === "e10" ? "E10" : fuelType === "e5" ? "E5" : "Diesel"} size="sm" />
+                          <PriceTag price={price} fuelType={effectiveFuelType === "e10" ? "E10" : effectiveFuelType === "e5" ? "E5" : "Diesel"} size="sm" />
                         ) : (
                           <span style={{ fontSize: "12px", color: "#64748B" }}>–</span>
                         )}
@@ -338,7 +358,7 @@ export default function HomePage() {
                           <button
                             onClick={async (e) => {
                               e.stopPropagation();
-                              const shared = await shareStation({ stationName: station.brand || station.name, price, fuelType: fuelType === "e10" ? "E10" : fuelType === "e5" ? "E5" : "Diesel", address: station.street, dist: station.dist });
+                              const shared = await shareStation({ stationName: station.brand || station.name, price, fuelType: effectiveFuelType === "e10" ? "E10" : effectiveFuelType === "e5" ? "E5" : "Diesel", address: station.street, dist: station.dist });
                               if (shared && !navigator.share) { setCopiedId(station.id); setTimeout(() => setCopiedId(null), 2000); }
                             }}
                             title="Teilen"
