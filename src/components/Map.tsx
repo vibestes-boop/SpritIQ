@@ -38,6 +38,10 @@ export default function MapClient() {
   // Station die von Home-Page Bottom Sheet herkommt und hervorgehoben werden soll
   const searchParams = useSearchParams();
   const highlightId = searchParams.get("highlight");
+  // Ref: flyTo wird nur EINMAL pro Highlight-Session gefeuert
+  const highlightFlownRef = useRef<string | null>(null);
+  // Ref: Cleanup-Timer für URL-Cleanup nach Animation
+  const highlightCleanupRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const geo = useGeolocation();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -184,7 +188,7 @@ export default function MapClient() {
             margin-top: -28px; margin-left: -28px;
             border-radius: 50%;
             border: 3px solid rgba(255,255,255,0.8);
-            animation: spritiq-pulse 1.2s ease-out infinite;
+            animation: spritiq-pulse 1.2s ease-out 6;
             pointer-events: none;
           }
           .spritiq-blink-wrap {
@@ -288,11 +292,21 @@ export default function MapClient() {
           mapRef.current?.panTo([station.lat, station.lng], { animate: true });
         });
 
-        // Highlight-Station: Karte zentrieren und reinzoomen
-        if (isHighlight) {
+        // Highlight-Station: flyTo NUR EINMAL (Ref-Guard), dann URL-Cleanup nach 8 Sek
+        if (isHighlight && highlightFlownRef.current !== highlightId) {
+          highlightFlownRef.current = highlightId;
+          // Bestehenden Cleanup-Timer abbrechen
+          if (highlightCleanupRef.current) clearTimeout(highlightCleanupRef.current);
           setTimeout(() => {
             mapRef.current?.flyTo([station.lat, station.lng], 15, { animate: true, duration: 1.2 });
           }, 400);
+          // Nach 8 Sek: ?highlight aus URL entfernen (ohne Page-Reload)
+          // Das stoppt das Blinken beim nächsten Marker-Re-Render sauber
+          highlightCleanupRef.current = setTimeout(() => {
+            if (typeof window !== "undefined") {
+              window.history.replaceState(null, "", window.location.pathname);
+            }
+          }, 8000);
         }
 
         markersRef.current.push(marker);
