@@ -9,13 +9,27 @@ export interface NewsItem {
   publishedAt: string;
 }
 
+export interface PriceFactor {
+  label: string;        // z.B. "Rohöl (Brent)"
+  impact: "positive" | "negative" | "neutral"; // auf Preise
+  detail: string;       // z.B. "82 USD/Barrel — stabil"
+}
+
+export interface DayForecast {
+  day: string;          // "Mo"
+  level: "low" | "mid" | "high";
+}
+
 export interface BriefingResponse {
   ok: boolean;
   recommendation: "TANKEN EMPFOHLEN" | "ABWARTEN" | "NICHT TANKEN";
   trend: "up" | "down" | "stable";
-  confidence: number; // 1-10
+  confidence: number;
   summary: string;
   politicalContext: string;
+  priceFactors: PriceFactor[];     // neu: Top-Einflussfaktoren
+  weeklyForecast: DayForecast[];   // neu: Mo-So Prognose
+  regionalHotspots: string[];      // neu: günstigste Regionen
   newsItems: NewsItem[];
   articlesAnalyzed: number;
   generatedAt: string;
@@ -109,17 +123,32 @@ async function callQwen(newsItems: NewsItem[]): Promise<Omit<BriefingResponse, "
 
   const prompt = `Du bist SpritIQ, ein KI-Assistent für deutsche Kraftstoffpreise.
 
-Analysiere folgende aktuelle Nachrichtenartikel und erstelle eine Empfehlung ob Deutsche Autofahrer jetzt tanken sollten oder warten:
+Analysiere folgende aktuelle Nachrichtenartikel und erstelle eine Empfehlung für deutsche Autofahrer:
 
 ${newsText || "Keine aktuellen Nachrichten gefunden."}
 
-Antworte NUR mit einem validen JSON-Objekt in diesem Format (kein Markdown, kein Text davor/danach):
+Antworte NUR mit einem validen JSON-Objekt (kein Markdown, kein Text davor/danach):
 {
   "recommendation": "TANKEN EMPFOHLEN" | "ABWARTEN" | "NICHT TANKEN",
   "trend": "up" | "down" | "stable",
   "confidence": <Zahl 1-10>,
-  "summary": "<2-3 Sätze Zusammenfassung der Marktlage auf Deutsch, max 200 Zeichen>",
-  "politicalContext": "<1 Satz zu politischen/regulatorischen Entwicklungen auf Deutsch, max 150 Zeichen>"
+  "summary": "<2-3 Sätze Zusammenfassung der Marktlage auf Deutsch, max 250 Zeichen>",
+  "politicalContext": "<1 Satz zu politischen/regulatorischen Entwicklungen, max 150 Zeichen>",
+  "priceFactors": [
+    { "label": "<Faktor>", "impact": "positive" | "negative" | "neutral", "detail": "<kurze Erklärung max 60 Zeichen>" },
+    { "label": "<Faktor>", "impact": "positive" | "negative" | "neutral", "detail": "<kurze Erklärung max 60 Zeichen>" },
+    { "label": "<Faktor>", "impact": "positive" | "negative" | "neutral", "detail": "<kurze Erklärung max 60 Zeichen>" }
+  ],
+  "weeklyForecast": [
+    { "day": "Mo", "level": "low" | "mid" | "high" },
+    { "day": "Di", "level": "low" | "mid" | "high" },
+    { "day": "Mi", "level": "low" | "mid" | "high" },
+    { "day": "Do", "level": "low" | "mid" | "high" },
+    { "day": "Fr", "level": "low" | "mid" | "high" },
+    { "day": "Sa", "level": "low" | "mid" | "high" },
+    { "day": "So", "level": "low" | "mid" | "high" }
+  ],
+  "regionalHotspots": ["<Stadt/Region 1>", "<Stadt/Region 2>", "<Stadt/Region 3>"]
 }`;
 
   const res = await fetch("https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions", {
@@ -129,9 +158,9 @@ Antworte NUR mit einem validen JSON-Objekt in diesem Format (kein Markdown, kein
       "Content-Type":  "application/json",
     },
     body: JSON.stringify({
-      model:      "qwen-plus",
-      messages:   [{ role: "user", content: prompt }],
-      max_tokens: 400,
+      model:       "qwen-plus",
+      messages:    [{ role: "user", content: prompt }],
+      max_tokens:  800,
       temperature: 0.3,
     }),
   });
@@ -144,17 +173,19 @@ Antworte NUR mit einem validen JSON-Objekt in diesem Format (kein Markdown, kein
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content ?? "";
 
-  // JSON aus Response extrahieren
   const jsonMatch = content.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error("Kein JSON in Qwen-Antwort");
 
   const parsed = JSON.parse(jsonMatch[0]);
   return {
-    recommendation: parsed.recommendation ?? "ABWARTEN",
-    trend:          parsed.trend ?? "stable",
-    confidence:     Math.min(10, Math.max(1, Number(parsed.confidence) || 5)),
-    summary:        parsed.summary ?? "Analyse nicht verfügbar.",
-    politicalContext: parsed.politicalContext ?? "",
+    recommendation:    parsed.recommendation ?? "ABWARTEN",
+    trend:             parsed.trend ?? "stable",
+    confidence:        Math.min(10, Math.max(1, Number(parsed.confidence) || 5)),
+    summary:           parsed.summary ?? "Analyse nicht verfügbar.",
+    politicalContext:  parsed.politicalContext ?? "",
+    priceFactors:      Array.isArray(parsed.priceFactors) ? parsed.priceFactors.slice(0, 3) : [],
+    weeklyForecast:    Array.isArray(parsed.weeklyForecast) ? parsed.weeklyForecast : [],
+    regionalHotspots:  Array.isArray(parsed.regionalHotspots) ? parsed.regionalHotspots.slice(0, 3) : [],
   };
 }
 
@@ -166,6 +197,21 @@ function getDemoData(): Omit<BriefingResponse, "newsItems" | "articlesAnalyzed" 
     confidence: 7,
     summary: "Rohöl (Brent) stabil bei ~82 USD/Barrel. Demo-Modus aktiv — konfiguriere DASHSCOPE_API_KEY für echte KI-Analyse.",
     politicalContext: "Keine aktuellen politischen Entwicklungen im Demo-Modus.",
+    priceFactors: [
+      { label: "Rohöl (Brent)", impact: "neutral", detail: "~82 USD/Barrel — seitwärts" },
+      { label: "Euro/Dollar", impact: "positive", detail: "1,09 USD — stützend für Importe" },
+      { label: "OPEC+ Kürzungen", impact: "negative", detail: "Angebotsdruck bleibt bestehen" },
+    ],
+    weeklyForecast: [
+      { day: "Mo", level: "mid" },
+      { day: "Di", level: "mid" },
+      { day: "Mi", level: "low" },
+      { day: "Do", level: "low" },
+      { day: "Fr", level: "mid" },
+      { day: "Sa", level: "high" },
+      { day: "So", level: "high" },
+    ],
+    regionalHotspots: ["Bayern", "Baden-Württemberg", "NRW"],
   };
 }
 
