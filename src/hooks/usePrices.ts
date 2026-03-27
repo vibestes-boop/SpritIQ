@@ -67,7 +67,7 @@ export function usePrices({
         lng: String(lng),
         rad: String(radius),
         sort: sortMode,
-        type: fuelType,
+        type: "all", // Immer alle Kraftstofftypen laden, Frontend filtert
       });
 
       const res = await fetch(`/api/prices?${params}`);
