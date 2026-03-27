@@ -1,5 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// ─── In-Memory Cache (30 Min TTL) ────────────────────────────────────────────
+// Verhindert dass jeder User-Request einen separaten Qwen AI-Call auslöst.
+// Cache lebt im Node.js Modul-Scope — wird bei Vercel Function Cold-Start geleert.
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 Minuten
+interface CacheEntry {
+  data: Omit<BriefingResponse, "ok">;
+  cachedAt: number;
+}
+const briefingCache = new Map<string, CacheEntry>();
+
+function getCacheKey(): string {
+  const now = new Date();
+  // Slot = 30-Min-Block: 00:00, 00:30, 01:00, ...
+  const slot = Math.floor(now.getMinutes() / 30);
+  return `briefing-${now.toISOString().slice(0, 11)}${now.getHours()}-${slot}`;
+}
+
+function getFromCache(): Omit<BriefingResponse, "ok"> | null {
+  const key = getCacheKey();
+  const entry = briefingCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.cachedAt > CACHE_TTL_MS) {
+    briefingCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setToCache(data: Omit<BriefingResponse, "ok">): void {
+  const key = getCacheKey();
+  // Alte Einträge bereinigen (max 3 Slots behalten)
+  if (briefingCache.size > 3) {
+    const oldestKey = briefingCache.keys().next().value;
+    if (oldestKey) briefingCache.delete(oldestKey);
+  }
+  briefingCache.set(key, { data, cachedAt: Date.now() });
+}
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 export interface NewsItem {
   source: string;
@@ -217,28 +255,39 @@ function getDemoData(): Omit<BriefingResponse, "newsItems" | "articlesAnalyzed" 
 
 // ─── GET /api/briefing ────────────────────────────────────────────────────────
 export async function GET(_req: NextRequest) {
-  // RSS Feeds parallel abrufen
+  // ── 1. Cache-Prüfung: Wenn frische Daten vorhanden, sofort zurück ────────
+  const cached = getFromCache();
+  if (cached) {
+    console.log("[briefing] Cache-HIT — kein Qwen-Call");
+    return NextResponse.json(
+      { ok: true, ...cached },
+      { headers: { "Cache-Control": cached.source === "ai"
+        ? "public, s-maxage=1800, stale-while-revalidate=300"
+        : "no-store", "X-Cache": "HIT" } }
+    );
+  }
+
+  // ── 2. RSS Feeds parallel abrufen ─────────────────────────────────
   const feedResults = await Promise.allSettled(
     RSS_FEEDS.map((f) => fetchRSSItems(f.url, f.name))
   );
-
   const allNews: NewsItem[] = feedResults
     .flatMap((r) => (r.status === "fulfilled" ? r.value : []))
-    .slice(0, 12); // Max 12 Artikel für Prompt
+    .slice(0, 12);
 
+  // ── 3. Qwen AI Call (nur bei Cache-MISS) ────────────────────────
   let aiResult: Omit<BriefingResponse, "newsItems" | "articlesAnalyzed" | "generatedAt" | "source" | "ok">;
   let source: "ai" | "demo" = "demo";
-
   try {
     aiResult = await callQwen(allNews);
     source = "ai";
+    console.log("[briefing] Qwen-CALL — Ergebnis wird 30 Min gecacht");
   } catch (err) {
     console.error("[briefing] Qwen error:", err);
     aiResult = getDemoData();
   }
 
-  const response: BriefingResponse = {
-    ok: true,
+  const responseData: Omit<BriefingResponse, "ok"> = {
     ...aiResult,
     newsItems: allNews,
     articlesAnalyzed: allNews.length,
@@ -246,12 +295,13 @@ export async function GET(_req: NextRequest) {
     source,
   };
 
-  return NextResponse.json(response, {
-    headers: {
-      // 30 Minuten Cache — täglich reicht, aber auch stündlich ok
-      "Cache-Control": source === "ai"
-        ? "public, s-maxage=1800, stale-while-revalidate=300"
-        : "no-store",
-    },
-  });
+  // ── 4. In Cache speichern (nur bei AI-Antwort, nicht bei Demo-Fallback) ──
+  if (source === "ai") setToCache(responseData);
+
+  return NextResponse.json(
+    { ok: true, ...responseData },
+    { headers: { "Cache-Control": source === "ai"
+      ? "public, s-maxage=1800, stale-while-revalidate=300"
+      : "no-store", "X-Cache": "MISS" } }
+  );
 }
