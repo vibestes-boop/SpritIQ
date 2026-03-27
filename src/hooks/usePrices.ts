@@ -75,11 +75,14 @@ export function usePrices({
   const lastFetchedCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // fetchPrices: KEIN fuelType in Dependencies — Kraftstoff-Wechsel triggert kein Refetch
+  const sortModeRef = useRef(sortMode);
+  sortModeRef.current = sortMode; // immer aktuell ohne Dep-Änderung
+
+  // fetchPrices: KEIN sortMode in Dependencies — Sort-Wechsel triggert keinen Refetch
   const fetchPrices = useCallback(async (force = false) => {
     // GPS-Jitter-Schutz: nur fetchen wenn Koordinaten sich genug verändert haben
     if (!force && !coordsChangedSignificantly(lastFetchedCoordsRef.current, { lat, lng })) {
-      return; // Kein signifikanter Wechsel → gecachte Daten behalten
+      return;
     }
 
     setLoading(true);
@@ -90,8 +93,8 @@ export function usePrices({
         lat:  String(lat),
         lng:  String(lng),
         rad:  String(radius),
-        sort: sortMode,
-        type: "all", // IMMER alle Kraftstofftypen — Frontend sortiert/filtert
+        sort: sortModeRef.current, // Ref lesen statt aus Closure
+        type: "all",
       });
 
       const res = await fetch(`/api/prices?${params}`);
@@ -108,7 +111,7 @@ export function usePrices({
     } finally {
       setLoading(false);
     }
-  }, [lat, lng, radius, sortMode]); // fuelType BEWUSST nicht hier — kein Refetch bei Kraftstoff-Wechsel
+  }, [lat, lng, radius]); // sortMode BEWUSST RAUS — Ref-Pattern verhindert cascading effects
 
   // Initial fetch + Koordinaten-Change (mit GPS-Threshold-Schutz)
   useEffect(() => {
