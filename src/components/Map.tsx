@@ -29,10 +29,8 @@ export default function MapClient() {
   const [selected, setSelected] = useState<Station | null>(null);
   const [fuelType, setFuelType] = useState<FuelType>("e10");
   const [mapMoved, setMapMoved] = useState(false);
-  const [mapCenter, setMapCenter] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const [currentZoom, setCurrentZoom] = useState(13); // Track Zoom-Level für Clustering
 
   const geo = useGeolocation();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -93,7 +91,6 @@ export default function MapClient() {
       mapRef.current = map;
 
       // Beim Bewegen: mapCenter mit 800ms Debounce aktualisieren
-      // so wird die API erst nach dem Stop beim Panning aufgerufen
       map.on("moveend", () => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
@@ -101,6 +98,11 @@ export default function MapClient() {
           setMapCenter({ lat: center.lat, lng: center.lng });
           setMapMoved(true);
         }, 800);
+      });
+
+      // Zoom-Level tracken für Clustering
+      map.on("zoomend", () => {
+        setCurrentZoom(map.getZoom());
       });
 
       // ResizeObserver: invalidateSize bei Container-Größenänderung
@@ -144,7 +146,7 @@ export default function MapClient() {
     });
   }, [geo.lat, geo.lng, geo.loading]);
 
-  // ── Tankstellen-Marker aktualisieren wenn Stationen oder FuelType ändert ─
+  // ── Tankstellen-Marker: Zoom-basiertes Clustering ────────────────────────
   useEffect(() => {
     if (!mapRef.current || loading || !stations.length) return;
 
@@ -155,45 +157,79 @@ export default function MapClient() {
       markersRef.current.forEach((m) => (m as { remove: () => void }).remove());
       markersRef.current = [];
 
+      // ── Clustering: Raster-Zellengrößen pro Zoom-Stufe ──────────────────
+      // zoom ≤ 11 (Stadtübersicht): ~8km Zellen → 1 günstigste Station pro Zone
+      // zoom 12-13 (Stadtteil):     ~3km Zellen → reduzierte Dichte
+      // zoom ≥ 14 (Straße):         alle Stationen anzeigen
+      function clusterStations(all: Station[]): Station[] {
+        if (currentZoom >= 14) return all;
+        const gridSize = currentZoom <= 11 ? 0.08 : 0.035;
+        const cells = new Map<string, Station>();
+        for (const s of all) {
+          const key = `${Math.floor(s.lat / gridSize)}_${Math.floor(s.lng / gridSize)}`;
+          const existing = cells.get(key);
+          if (!existing) {
+            cells.set(key, s);
+          } else {
+            // Günstigste Station pro Zelle behalten
+            const newP = s[fuelType] as number | false;
+            const oldP = existing[fuelType] as number | false;
+            if (newP && (!oldP || newP < (oldP as number))) cells.set(key, s);
+          }
+        }
+        return Array.from(cells.values());
+      }
+
+      // ── Marker-Größen + Schrift pro Zoom-Stufe ───────────────────────────
+      const isOverview = currentZoom <= 11;  // Stadt-Übersicht: klein
+      const isMedium   = currentZoom <= 13;  // Stadtteil: mittel
+      const W   = isOverview ? 44 : isMedium ? 52 : 60;
+      const H   = isOverview ? 28 : isMedium ? 32 : 38;
+      const TH  = isOverview ? 20 : isMedium ? 23 : 28; // Kasten-Höhe
+      const TX  = W / 2;
+      const TY  = TH / 2;
+      const FS  = isOverview ? 8  : isMedium ? 9  : 11;
+      const RX  = isOverview ? 6  : isMedium ? 7  : 8;
+      // Pfeil-Punkte
+      const P1X = W / 2 - 4, P2X = W / 2 + 4, P3X = W / 2;
+      const PY1 = TH, PY2 = H;
+
+      const visibleStations = clusterStations(stations);
       const allPrices = stations
         .map((s) => s[fuelType] as number | false)
         .filter((p): p is number => typeof p === "number" && p > 0);
 
-      stations.forEach((station) => {
+      visibleStations.forEach((station) => {
         const price = station[fuelType] as number | false;
         const status = getPriceStatus(price, allPrices);
         const color = STATUS_COLORS[status];
         const label = price ? price.toFixed(3).replace(".", ",") : "–";
 
-        const svg = `
-          <svg width="56" height="36" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg">
-            <rect x="0" y="0" width="56" height="28" rx="8" fill="${color}" opacity="0.95"/>
-            <polygon points="24,28 32,28 28,36" fill="${color}" opacity="0.95"/>
-            <text x="28" y="15" text-anchor="middle" dominant-baseline="middle"
-                  font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#0A0A0F">
-              ${label}€
-            </text>
-          </svg>`;
+        const svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="${W}" height="${TH}" rx="${RX}" fill="${color}" opacity="0.95"/>
+  <polygon points="${P1X},${PY1} ${P2X},${PY1} ${P3X},${PY2}" fill="${color}" opacity="0.95"/>
+  <text x="${TX}" y="${TY}" text-anchor="middle" dominant-baseline="middle"
+        font-family="JetBrains Mono,monospace" font-size="${FS}" font-weight="700" fill="#0A0A0F">
+    ${label}€
+  </text>
+</svg>`;
 
         const icon = L.divIcon({
           html: svg,
           className: "",
-          iconSize: [56, 36],
-          iconAnchor: [28, 36],
+          iconSize:   [W, H],
+          iconAnchor: [W / 2, H],
         });
 
-        const marker = L.marker([station.lat, station.lng], { icon }).addTo(
-          mapRef.current!,
-        );
+        const marker = L.marker([station.lat, station.lng], { icon }).addTo(mapRef.current!);
         marker.on("click", () => {
           setSelected(station);
           mapRef.current?.panTo([station.lat, station.lng], { animate: true });
         });
-
         markersRef.current.push(marker);
       });
     });
-  }, [stations, fuelType, loading]);
+  }, [stations, fuelType, loading, currentZoom]);
 
   return (
     <div className="relative w-full h-full">
