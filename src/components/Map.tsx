@@ -1,7 +1,8 @@
 "use client";
 
-import "leaflet/dist/leaflet.css"; // MUSS statisch importiert werden — dynamischer Import funktioniert nicht
+import "leaflet/dist/leaflet.css";
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { Map as LeafletMap } from "leaflet";
 import { X, Navigation, ChevronUp } from "lucide-react";
 import PriceTag from "@/components/ui/PriceTag";
@@ -33,6 +34,10 @@ export default function MapClient() {
   // Zoom-Tier statt raw zoom: Marker werden nur neu gerendert wenn Tier-Grenze überschritten wird
   // 0 = Übersicht (≤11), 1 = Stadtteil (12-13), 2 = Detail (≥14)
   const [zoomTier, setZoomTier] = useState(1);
+
+  // Station die von Home-Page Bottom Sheet herkommt und hervorgehoben werden soll
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get("highlight");
 
   const geo = useGeolocation();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -158,6 +163,37 @@ export default function MapClient() {
     import("leaflet").then((L) => {
       if (!mapRef.current) return;
 
+      // CSS Pulse-Animation EINMALIG in document.head injizieren
+      if (!document.getElementById("spritiq-pulse-style")) {
+        const style = document.createElement("style");
+        style.id = "spritiq-pulse-style";
+        style.textContent = `
+          @keyframes spritiq-pulse {
+            0%   { transform: scale(1);   opacity: 0.9; }
+            50%  { transform: scale(1.5); opacity: 0.4; }
+            100% { transform: scale(2);   opacity: 0; }
+          }
+          @keyframes spritiq-blink {
+            0%, 100% { filter: brightness(1); }
+            50%       { filter: brightness(1.6) drop-shadow(0 0 8px white); }
+          }
+          .spritiq-pulse-ring {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 56px; height: 56px;
+            margin-top: -28px; margin-left: -28px;
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.8);
+            animation: spritiq-pulse 1.2s ease-out infinite;
+            pointer-events: none;
+          }
+          .spritiq-blink-wrap {
+            animation: spritiq-blink 1s ease-in-out 6;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+
       markersRef.current.forEach((m) => (m as { remove: () => void }).remove());
       markersRef.current = [];
 
@@ -206,6 +242,7 @@ export default function MapClient() {
         const status = getPriceStatus(price, allPrices);
         const color  = STATUS_COLORS[status];
         const label  = price ? price.toFixed(3).replace(".", ",") : "–";
+        const isHighlight = station.id === highlightId;
 
         // Count-Badge nur im Übersichts-Modus und wenn > 1 Station aggregiert
         const badge = (zoomTier === 0 && count > 1)
@@ -214,7 +251,7 @@ export default function MapClient() {
                paint-order="stroke" stroke="${color}" stroke-width="1.5">${count}×</text>`
           : "";
 
-        const svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+        const svgInner = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
   <rect x="0" y="0" width="${W}" height="${TH}" rx="${RX}" fill="${color}" opacity="0.95"/>
   <polygon points="${P1},${TH} ${P2},${TH} ${P3},${H}" fill="${color}" opacity="0.95"/>
   <text x="${TX}" y="${TY}" text-anchor="middle" dominant-baseline="middle"
@@ -224,8 +261,16 @@ export default function MapClient() {
   ${badge}
 </svg>`;
 
+        // Highlight: Pulse-Ring + Blink-Effekt
+        const html = isHighlight
+          ? `<div class="spritiq-blink-wrap" style="position:relative;display:inline-block">
+               <div class="spritiq-pulse-ring"></div>
+               ${svgInner}
+             </div>`
+          : svgInner;
+
         const icon = L.divIcon({
-          html: svg,
+          html,
           className: "",
           iconSize:   [W, H],
           iconAnchor: [W / 2, H],
@@ -242,10 +287,18 @@ export default function MapClient() {
           setSelected(station);
           mapRef.current?.panTo([station.lat, station.lng], { animate: true });
         });
+
+        // Highlight-Station: Karte zentrieren und reinzoomen
+        if (isHighlight) {
+          setTimeout(() => {
+            mapRef.current?.flyTo([station.lat, station.lng], 15, { animate: true, duration: 1.2 });
+          }, 400);
+        }
+
         markersRef.current.push(marker);
       });
     });
-  }, [stations, fuelType, loading, zoomTier]);
+  }, [stations, fuelType, loading, zoomTier, highlightId]);
 
   return (
     <div className="relative w-full h-full">

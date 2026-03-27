@@ -167,7 +167,7 @@ export default function StationSheet({ station, onClose, onToggleFavorite, isFav
           {/* Sekundäre Aktionen */}
           <div style={{ display: "flex", gap: "10px" }}>
             <button
-              onClick={() => { router.push("/karte"); onClose(); }}
+              onClick={() => { router.push(`/karte?highlight=${station.id}`); onClose(); }}
               style={{
                 flex: 1, padding: "12px 8px", borderRadius: "12px",
                 background: "#16161F", border: "1px solid #2A2A3C",
