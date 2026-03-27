@@ -174,7 +174,7 @@ export default function HomePage() {
   const effectiveLng = manualLocation?.lng ?? geo.lng;
   const hasLocation = effectiveLat !== null && effectiveLng !== null;
 
-  const { stations, loading, error, refresh } = usePrices({
+  const { stations, loading, error, refresh, updatedAt, source } = usePrices({
     lat: effectiveLat ?? 48.1374,
     lng: effectiveLng ?? 11.5755,
     fuelType,
@@ -207,6 +207,21 @@ export default function HomePage() {
     .map((s) => s[effectiveFuelType] as number | false)
     .filter((p): p is number => typeof p === "number" && p > 0);
   const recommendation = getRecommendation(stations, effectiveFuelType);
+
+  // Preisalter für UI-Anzeige — im useEffect berechnet (Date.now() ist impure im Render)
+  const [freshnessLabel, setFreshnessLabel] = useState<string | null>(null);
+  useEffect(() => {
+    if (!updatedAt) return;
+    const update = () => {
+      const min = Math.floor((Date.now() - new Date(updatedAt).getTime()) / 60000);
+      if (min < 1) { setFreshnessLabel("gerade"); }
+      else if (min < 60) { setFreshnessLabel(`vor ${min} Min`); }
+      else { setFreshnessLabel(`vor ${Math.floor(min / 60)}h`); }
+    };
+    update();
+    const timer = setInterval(update, 60000); // jede Minute aktualisieren
+    return () => clearInterval(timer);
+  }, [updatedAt]);
 
   // Snapshot + Alarme prüfen
   useEffect(() => {
@@ -785,7 +800,16 @@ export default function HomePage() {
           {/* ── Stationsliste ── (edge-to-edge, bricht aus px-4 aus) */}
           <div style={{ marginLeft: "-16px", marginRight: "-16px" }}>
             <div className="flex items-center justify-between" style={{ paddingLeft: "16px", paddingRight: "16px", marginBottom: "6px" }}>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#64748B", letterSpacing: "0.08em", textTransform: "uppercase" }}>Günstigste in der Nähe</p>
+              <div className="flex items-center gap-2">
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "#64748B", letterSpacing: "0.08em", textTransform: "uppercase" }}>Günstigste in der Nähe</p>
+                {/* Daten-Freshness Indicator */}
+                {updatedAt && !loading && freshnessLabel && (
+                  <span style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "9px", color: "#475569", background: "#111118", border: "1px solid #1E1E2E", borderRadius: "5px", padding: "1px 6px" }}>
+                    <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: source === "api" ? "#22C55E" : "#475569", flexShrink: 0 }} />
+                    {freshnessLabel}
+                  </span>
+                )}
+              </div>
               <div className="flex gap-2">
                 <span style={{ fontSize: "10px", color: "#475569" }}>Entfernung</span>
                 <span style={{ fontSize: "10px", color: "#475569" }}>Alle</span>
