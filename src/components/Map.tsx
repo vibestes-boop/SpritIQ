@@ -42,6 +42,13 @@ export default function MapClient() {
     refreshInterval: 5 * 60 * 1000,
   });
 
+  // Karte: GPS automatisch anfragen wenn noch nicht entschieden
+  useEffect(() => {
+    if (geo.permission === "waiting") {
+      geo.requestLocation();
+    }
+  }, [geo.permission, geo.requestLocation]);
+
   // ── Karte initialisieren ─────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
