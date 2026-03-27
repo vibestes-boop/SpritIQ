@@ -27,11 +27,16 @@ export default function MapClient() {
   const markersRef    = useRef<unknown[]>([]);
   const [selected, setSelected]   = useState<Station | null>(null);
   const [fuelType, setFuelType]   = useState<FuelType>("e10");
+  const [mapMoved, setMapMoved]   = useState(false);
+  const [mapCenter, setMapCenter] = useState<{lat: number; lng: number} | null>(null);
 
   const geo = useGeolocation();
-  const { stations, loading } = usePrices({
-    lat: geo.lat ?? 48.1374,
-    lng: geo.lng ?? 11.5755,
+  // Suchkoordinaten: mapCenter (wenn Karte bewegt) oder GPS
+  const searchLat = mapCenter?.lat ?? geo.lat ?? 48.1374;
+  const searchLng = mapCenter?.lng ?? geo.lng ?? 11.5755;
+  const { stations, loading, refresh } = usePrices({
+    lat: searchLat,
+    lng: searchLng,
     fuelType,
     refreshInterval: 5 * 60 * 1000,
   });
@@ -70,6 +75,13 @@ export default function MapClient() {
 
       L.control.zoom({ position: "bottomright" }).addTo(map);
       mapRef.current = map;
+
+      // Beim Bewegen: mapCenter aktualisieren und Button zeigen
+      map.on("moveend", () => {
+        const center = map.getCenter();
+        setMapCenter({ lat: center.lat, lng: center.lng });
+        setMapMoved(true);
+      });
 
       // invalidateSize nach kurzer Verzögerung — Next.js layout shift fix
       setTimeout(() => { map.invalidateSize(); }, 300);
@@ -225,6 +237,34 @@ export default function MapClient() {
               </span>
             </>
           )}
+        </div>
+      )}
+
+      {/* ── „In diesem Bereich suchen" Button ── */}
+      {mapMoved && !loading && (
+        <div style={{ position: "absolute", top: "64px", left: "50%", transform: "translateX(-50%)", zIndex: 999 }}>
+          <button
+            onClick={() => { setMapMoved(false); refresh(); }}
+            style={{
+              padding:        "10px 18px",
+              background:     "rgba(17,17,24,0.95)",
+              border:         "1px solid rgba(34,197,94,0.4)",
+              borderRadius:   "24px",
+              color:          "#22C55E",
+              fontSize:       "13px",
+              fontWeight:     700,
+              cursor:         "pointer",
+              backdropFilter: "blur(12px)",
+              display:        "flex",
+              alignItems:     "center",
+              gap:            "6px",
+              boxShadow:      "0 4px 20px rgba(0,0,0,0.4)",
+              whiteSpace:     "nowrap",
+            }}
+          >
+            <Navigation size={13} />
+            In diesem Bereich suchen
+          </button>
         </div>
       )}
 
