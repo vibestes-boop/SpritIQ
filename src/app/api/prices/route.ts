@@ -138,9 +138,22 @@ export async function GET(req: NextRequest) {
       url.searchParams.set("type", type);
       url.searchParams.set("apikey", apiKey);
 
-      const res = await fetch(url.toString(), {
-        next: { revalidate: 300 }, // 5 Min Cache
-      });
+      // Fetch mit Timeout + einmaligem Retry
+      async function fetchWithRetry(urlStr: string, retries = 1): Promise<Response> {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 8000); // 8s Timeout
+        try {
+          const r = await fetch(urlStr, { next: { revalidate: 300 }, signal: controller.signal });
+          clearTimeout(timer);
+          return r;
+        } catch (e) {
+          clearTimeout(timer);
+          if (retries > 0) return fetchWithRetry(urlStr, retries - 1);
+          throw e;
+        }
+      }
+
+      const res = await fetchWithRetry(url.toString());
 
       if (!res.ok) throw new Error(`Tankerkönig HTTP ${res.status}`);
 
