@@ -2,33 +2,49 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-interface GeolocationState {
-  lat: number;
-  lng: number;
+export type GeoPermission = "waiting" | "granted" | "denied" | "unavailable" | "loading";
+
+export interface GeolocationState {
+  lat: number | null;
+  lng: number | null;
   accuracy: number | null;
   loading: boolean;
+  permission: GeoPermission;
   error: string | null;
 }
 
-// München Fallback
-const FALLBACK = { lat: 48.1374, lng: 11.5755 };
+// München Fallback nur für Chart-History – NICHT für Preissuche
+export const MUNICH_FALLBACK = { lat: 48.1374, lng: 11.5755 };
 
 export function useGeolocation() {
   const [state, setState] = useState<GeolocationState>({
-    lat: FALLBACK.lat,
-    lng: FALLBACK.lng,
+    lat: null,
+    lng: null,
     accuracy: null,
     loading: true,
+    permission: "loading",
     error: null,
   });
 
-  const refresh = useCallback(() => {
+  // Manuelle Koordinaten-Überschreibung (z.B. aus Stadtsuche)
+  const setManualLocation = useCallback((lat: number, lng: number, label?: string) => {
+    setState({
+      lat,
+      lng,
+      accuracy: null,
+      loading: false,
+      permission: "granted",
+      error: label ? null : null,
+    });
+  }, []);
+
+  const requestLocation = useCallback(() => {
     if (!("geolocation" in navigator)) {
-      setState((s) => ({ ...s, loading: false, error: "GPS nicht verfügbar" }));
+      setState((s) => ({ ...s, loading: false, permission: "unavailable", error: "GPS nicht verfügbar" }));
       return;
     }
 
-    setState((s) => ({ ...s, loading: true, error: null }));
+    setState((s) => ({ ...s, loading: true, permission: "loading", error: null }));
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -37,28 +53,57 @@ export function useGeolocation() {
           lng: pos.coords.longitude,
           accuracy: pos.coords.accuracy,
           loading: false,
+          permission: "granted",
           error: null,
         });
       },
       (err) => {
-        // Kein GPS → stille Degradierung auf Fallback
         setState((s) => ({
           ...s,
           loading: false,
-          error: err.code === 1 ? "GPS-Berechtigung verweigert" : "GPS-Fehler",
+          permission: err.code === 1 ? "denied" : "unavailable",
+          error: err.code === 1 ? "GPS-Berechtigung verweigert" : "GPS nicht verfügbar",
         }));
       },
       {
-        enableHighAccuracy: true,
-        timeout: 8000,
-        maximumAge: 60_000, // 1 Minute Cache
+        enableHighAccuracy: false, // Schneller ohne high accuracy
+        timeout: 10000,
+        maximumAge: 120_000, // 2 Minuten Cache
       }
     );
   }, []);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    // Prüfe erst ob Permission schon gesetzt ist
+    if ("permissions" in navigator) {
+      navigator.permissions
+        .query({ name: "geolocation" })
+        .then((result) => {
+          if (result.state === "granted") {
+            // Direkt anfragen ohne Popup
+            requestLocation();
+          } else if (result.state === "denied") {
+            setState((s) => ({ ...s, loading: false, permission: "denied", error: "GPS-Berechtigung verweigert" }));
+          } else {
+            // "prompt" – wir zeigen eigenes UI, fragen NICHT automatisch
+            setState((s) => ({ ...s, loading: false, permission: "waiting" }));
+          }
+          // Auf Änderungen reagieren
+          result.onchange = () => {
+            if (result.state === "granted") requestLocation();
+            else if (result.state === "denied") {
+              setState((s) => ({ ...s, loading: false, permission: "denied" }));
+            }
+          };
+        })
+        .catch(() => {
+          // Permissions API nicht verfügbar – direkt anfragen
+          requestLocation();
+        });
+    } else {
+      requestLocation();
+    }
+  }, [requestLocation]);
 
-  return { ...state, refresh };
+  return { ...state, requestLocation, setManualLocation };
 }

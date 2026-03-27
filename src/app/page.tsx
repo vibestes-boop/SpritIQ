@@ -12,6 +12,7 @@ import DetourModal from "@/components/DetourModal";
 import VoiceButton from "@/components/ui/VoiceButton";
 import PriceChart from "@/components/ui/PriceChart";
 import { AlarmToast, AlarmItem } from "@/components/ui/AlarmUI";
+import { LocationPrompt } from "@/components/ui/LocationPrompt";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { usePrices, getPriceStatus, type FuelType } from "@/hooks/usePrices";
 import { useVehicleProfile } from "@/hooks/useVehicleProfile";
@@ -78,8 +79,19 @@ export default function HomePage() {
   }
 
   const geo = useGeolocation();
+  const [manualLocation, setManualLocation] = useState<{lat: number; lng: number; label: string} | null>(null);
+
+  // Effektive Koordinaten: Manual > GPS > null
+  const effectiveLat = manualLocation?.lat ?? geo.lat;
+  const effectiveLng = manualLocation?.lng ?? geo.lng;
+  const hasLocation = effectiveLat !== null && effectiveLng !== null;
+
   const { stations, loading, error, source, refresh } = usePrices({
-    lat: geo.lat, lng: geo.lng, fuelType, sortMode, refreshInterval: 5 * 60 * 1000,
+    lat: effectiveLat ?? 48.1374,
+    lng: effectiveLng ?? 11.5755,
+    fuelType,
+    sortMode,
+    refreshInterval: hasLocation ? 5 * 60 * 1000 : 0,
   });
 
   // Effektiver Kraftstoff: wechselt automatisch wenn gewählter Typ keine Preise hat
@@ -306,10 +318,30 @@ export default function HomePage() {
 
             {loading ? (
               <div className="flex flex-col gap-2">{[0, 1, 2].map((i) => <StationSkeleton key={i} />)}</div>
+            ) : !hasLocation || geo.permission === "waiting" ? (
+              <LocationPrompt
+                mode="permission"
+                onRequestGPS={geo.requestLocation}
+                onLocationGranted={(lat, lng, label) => setManualLocation({ lat, lng, label })}
+              />
+            ) : geo.permission === "denied" && !manualLocation ? (
+              <LocationPrompt
+                mode="denied"
+                onRequestGPS={geo.requestLocation}
+                onLocationGranted={(lat, lng, label) => setManualLocation({ lat, lng, label })}
+              />
             ) : top3.length === 0 ? (
-              <Card variant="flat" style={{ padding: "20px", textAlign: "center" }}>
-                <p style={{ color: "#64748B", fontSize: "14px" }}>Keine Tankstationen gefunden.</p>
-              </Card>
+              <>
+                <Card variant="flat" style={{ padding: "16px", textAlign: "center" }}>
+                  <p style={{ color: "#64748B", fontSize: "13px", marginBottom: "8px" }}>Keine Tankstellen mit Preisen in {manualLocation?.label ?? "deiner Nähe"} gefunden.</p>
+                  <p style={{ color: "#475569", fontSize: "11px" }}>Tankerkönig hat für diesen Bereich keine aktuellen Preise. Versuche einen anderen Ort.</p>
+                </Card>
+                <LocationPrompt
+                  mode="search"
+                  onRequestGPS={geo.requestLocation}
+                  onLocationGranted={(lat, lng, label) => setManualLocation({ lat, lng, label })}
+                />
+              </>
             ) : (
               top3.map((station, idx) => {
                 const price  = station[effectiveFuelType] as number | false;
