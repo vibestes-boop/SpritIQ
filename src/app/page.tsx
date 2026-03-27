@@ -978,6 +978,9 @@ export default function HomePage() {
         onClose={() => setSelectedStation(null)}
         onToggleFavorite={toggleFavorite}
         isFavorite={isFavorite}
+        snapshots={recentHistory}
+        allPrices={allPrices}
+        activeFuelType={effectiveFuelType}
       />
 
       {detourStation &&
