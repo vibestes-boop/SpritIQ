@@ -1,6 +1,19 @@
 "use client";
 
-import { Brain, TrendingDown, TrendingUp, Minus, RefreshCw, Sparkles, WifiOff, Clock, MapPin, ArrowUp, ArrowDown } from "lucide-react";
+import { Brain, TrendingDown, TrendingUp, Minus, RefreshCw, Sparkles, WifiOff, Clock, MapPin, ArrowUp, ArrowDown, ExternalLink } from "lucide-react";
+
+// Relative Zeit: "vor 2h" / "vor 3 Min"
+function relativeTime(dateStr: string): string {
+  try {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const min = Math.floor(diff / 60000);
+    if (min < 1)  return "gerade eben";
+    if (min < 60) return `vor ${min} Min`;
+    const h = Math.floor(min / 60);
+    if (h < 24)   return `vor ${h}h`;
+    return `vor ${Math.floor(h / 24)}d`;
+  } catch { return ""; }
+}
 import BottomNav from "@/components/ui/BottomNav";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -181,9 +194,22 @@ export default function BriefingPage() {
           <Card variant="flat" style={{ flex: 1, padding: "14px" }}>
             <p style={{ fontSize: "11px", color: "#64748B", marginBottom: "6px" }}>KONFIDENZ</p>
             {loading ? <SkeletonBlock h="24px" w="60%" /> : (
-              <div className="flex items-center gap-2">
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "22px", fontWeight: 700, color: "#F8FAFC" }}>{data?.confidence ?? "–"}</span>
-                <span style={{ fontSize: "14px", color: "#64748B" }}>/10</span>
+              <div>
+                <div className="flex items-baseline gap-1" style={{ marginBottom: "8px" }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "22px", fontWeight: 700, color: "#F8FAFC" }}>{data?.confidence ?? "–"}</span>
+                  <span style={{ fontSize: "14px", color: "#64748B" }}>/10</span>
+                </div>
+                {data?.confidence && (
+                  <div style={{ height: "4px", borderRadius: "2px", background: "#1E1E2E", overflow: "hidden" }}>
+                    <div style={{
+                      height: "100%",
+                      width: `${(data.confidence / 10) * 100}%`,
+                      borderRadius: "2px",
+                      background: data.confidence >= 7 ? "#22C55E" : data.confidence >= 4 ? "#F59E0B" : "#EF4444",
+                      transition: "width 600ms ease",
+                    }} />
+                  </div>
+                )}
               </div>
             )}
           </Card>
@@ -257,28 +283,52 @@ export default function BriefingPage() {
           </p>
           <div className="flex flex-col gap-2">
             {loading ? [0, 1, 2].map((i) => (
-              <Card key={i} style={{ padding: "12px 14px" }}>
-                <div className="flex items-start gap-3">
-                  <SkeletonBlock w="50px" h="20px" />
-                  <div className="flex flex-col gap-2 flex-1"><SkeletonBlock h="13px" /><SkeletonBlock w="60%" h="13px" /></div>
-                </div>
-              </Card>
+              <div key={i} style={{ height: "80px", borderRadius: "12px", background: "#111118", border: "1px solid #1E1E2E" }} />
             )) : (data?.newsItems ?? []).map((item, i) => (
-              <Card key={i} interactive style={{ padding: "12px 14px" }}>
-                <div className="flex items-start gap-3">
-                  <span style={{ fontSize: "10px", fontWeight: 700, color: "#64748B", background: "#16161F", border: "1px solid #2A2A3C", borderRadius: "5px", padding: "2px 7px", flexShrink: 0, marginTop: "1px" }}>
-                    {item.source}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p style={{ fontSize: "13px", color: "#F8FAFC", lineHeight: 1.4 }}>{item.title}</p>
-                    {item.summary && (
-                      <p style={{ fontSize: "11px", color: "#64748B", marginTop: "3px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                        {item.summary}
-                      </p>
-                    )}
+              <a
+                key={i}
+                href={item.url || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: "none", display: "block" }}
+              >
+                <div style={{
+                  padding: "12px 14px",
+                  background: "#111118",
+                  border: "1px solid #1E1E2E",
+                  borderRadius: "12px",
+                  cursor: "pointer",
+                  transition: "border-color 150ms, background 150ms",
+                }}>
+                  <div className="flex items-start gap-3">
+                    <span style={{ fontSize: "10px", fontWeight: 700, color: "#64748B", background: "#16161F", border: "1px solid #2A2A3C", borderRadius: "5px", padding: "2px 7px", flexShrink: 0, marginTop: "1px" }}>
+                      {item.source}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: "13px", color: "#F8FAFC", lineHeight: 1.4 }}>{item.title}</p>
+                      {item.summary && (
+                        <p style={{ fontSize: "11px", color: "#64748B", marginTop: "4px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                          {item.summary}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2" style={{ marginTop: "6px" }}>
+                        {item.publishedAt && (
+                          <span style={{ fontSize: "10px", color: "#475569" }}>
+                            <Clock size={9} style={{ display: "inline", marginRight: "2px", verticalAlign: "middle" }} />
+                            {relativeTime(item.publishedAt)}
+                          </span>
+                        )}
+                        {item.url && (
+                          <span style={{ fontSize: "10px", color: "#3B82F6", display: "flex", alignItems: "center", gap: "2px" }}>
+                            <ExternalLink size={9} />
+                            Artikel öffnen
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </Card>
+              </a>
             ))}
             {!loading && (!data?.newsItems || data.newsItems.length === 0) && (
               <p style={{ fontSize: "13px", color: "#64748B", textAlign: "center", padding: "16px" }}>Keine relevanten Nachrichten gefunden</p>
