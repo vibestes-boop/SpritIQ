@@ -395,7 +395,10 @@ export default function StationSheet({
           {/* Sekundäre Buttons — 3-Spaltig */}
           <div style={{ display: "flex", gap: "8px" }}>
             <button
-              onClick={() => { router.push(`/karte?highlight=${station.id}`); onClose(); }}
+              onClick={() => {
+                router.push(`/karte?highlight=${station.id}&lat=${station.lat}&lng=${station.lng}`);
+                onClose();
+              }}
               style={{ flex: 1, padding: "12px 6px", borderRadius: "12px",
                 background: "#16161F", border: "1px solid #2A2A3C", cursor: "pointer",
                 display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>

@@ -37,7 +37,9 @@ export default function MapClient() {
 
   // Station die von Home-Page Bottom Sheet herkommt und hervorgehoben werden soll
   const searchParams = useSearchParams();
-  const highlightId = searchParams.get("highlight");
+  const highlightId  = searchParams.get("highlight");
+  const highlightLat = searchParams.get("lat");
+  const highlightLng = searchParams.get("lng");
   // Ref: flyTo wird nur EINMAL pro Highlight-Session gefeuert
   const highlightFlownRef = useRef<string | null>(null);
   // Ref: Cleanup-Timer für URL-Cleanup nach Animation
@@ -62,6 +64,32 @@ export default function MapClient() {
       geo.requestLocation();
     }
   }, [geo.permission, geo.requestLocation]);
+
+  // ── Highlight: flyTo mit lat/lng aus URL (unabhängig vom Clustering) ───────────────
+  // Dieser Effect verwendet die Koordinaten direkt aus dem URL-Parameter — so
+  // kein Warten auf Clustering, kein Station-Match nötig.
+  useEffect(() => {
+    if (!highlightId || !highlightLat || !highlightLng || !mapRef.current) return;
+    if (highlightFlownRef.current === highlightId) return;
+
+    const lat = parseFloat(highlightLat);
+    const lng = parseFloat(highlightLng);
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    highlightFlownRef.current = highlightId;
+    setTimeout(() => {
+      mapRef.current?.flyTo([lat, lng], 15, { animate: true, duration: 1.2 });
+    }, 500);
+
+    // URL nach 8 Sek bereinigen (verhindert wiederholtes Blinken bei Refresh)
+    if (highlightCleanupRef.current) clearTimeout(highlightCleanupRef.current);
+    highlightCleanupRef.current = setTimeout(() => {
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    }, 9000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightId, highlightLat, highlightLng]);
 
   // ── Karte initialisieren ─────────────────────────────────────────────────
   useEffect(() => {
@@ -210,7 +238,10 @@ export default function MapClient() {
         const gridSize = zoomTier === 0 ? 0.08 : 0.035;
         const cells = new Map<string, { station: Station; count: number }>();
         for (const s of all) {
-          const key = `${Math.floor(s.lat / gridSize)}_${Math.floor(s.lng / gridSize)}`;
+          // Highlight-Station IMMER als Einzelmarker — nie clustern, damit isHighlight=true sicher ist
+          const key = highlightId && s.id === highlightId
+            ? `__highlight_${s.id}__`
+            : `${Math.floor(s.lat / gridSize)}_${Math.floor(s.lng / gridSize)}`;
           const existing = cells.get(key);
           if (!existing) {
             cells.set(key, { station: s, count: 1 });
@@ -292,23 +323,8 @@ export default function MapClient() {
           mapRef.current?.panTo([station.lat, station.lng], { animate: true });
         });
 
-        // Highlight-Station: flyTo NUR EINMAL (Ref-Guard), dann URL-Cleanup nach 8 Sek
-        if (isHighlight && highlightFlownRef.current !== highlightId) {
-          highlightFlownRef.current = highlightId;
-          // Bestehenden Cleanup-Timer abbrechen
-          if (highlightCleanupRef.current) clearTimeout(highlightCleanupRef.current);
-          setTimeout(() => {
-            mapRef.current?.flyTo([station.lat, station.lng], 15, { animate: true, duration: 1.2 });
-          }, 400);
-          // Nach 8 Sek: ?highlight aus URL entfernen (ohne Page-Reload)
-          // Das stoppt das Blinken beim nächsten Marker-Re-Render sauber
-          highlightCleanupRef.current = setTimeout(() => {
-            if (typeof window !== "undefined") {
-              window.history.replaceState(null, "", window.location.pathname);
-            }
-          }, 8000);
-        }
-
+        // Highlight-Station: Pulse/Blink erfolgt via CSS-Klassen im SVG-HTML (s. isHighlight oben)
+        // flyTo wird im dedicated useEffect oben behandelt (URL-Params lat/lng)
         markersRef.current.push(marker);
       });
     });
