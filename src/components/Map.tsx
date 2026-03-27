@@ -281,7 +281,7 @@ export default function MapClient() {
           title="Mein Standort"
           style={{
             position:       "absolute",
-            bottom:         "96px",   // über den Zoom-Controls
+            bottom:         "160px",   // über BottomNav + Zoom-Controls (mobile-safe)
             right:          "12px",
             width:          "44px",
             height:         "44px",
