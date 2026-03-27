@@ -76,8 +76,19 @@ export function usePrices({
       const json: PricesResponse = await res.json();
       if (!json.ok) throw new Error("API Fehler");
 
+      const sorted = sortMode === "price"
+        ? [...json.stations].sort((a, b) => {
+            const pa = a[fuelType] as number | false;
+            const pb = b[fuelType] as number | false;
+            if (!pa && !pb) return 0;
+            if (!pa) return 1;
+            if (!pb) return -1;
+            return pa - pb;
+          })
+        : json.stations;
+
       setData({
-        stations: json.stations,
+        stations: sorted,
         source: json.source,
         updatedAt: json.updatedAt,
       });

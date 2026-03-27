@@ -134,7 +134,7 @@ export async function GET(req: NextRequest) {
       url.searchParams.set("lat", String(lat));
       url.searchParams.set("lng", String(lng));
       url.searchParams.set("rad", String(rad));
-      url.searchParams.set("sort", sort);
+      url.searchParams.set("sort", "dist"); // Tankerkönig: sort=price + type=all nicht kompatibel
       url.searchParams.set("type", type);
       url.searchParams.set("apikey", apiKey);
 
