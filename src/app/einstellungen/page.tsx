@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, RotateCcw, Car, Fuel, Gauge, Star, Bell, X, Trash2, Info, AlertTriangle } from "lucide-react";
+import { Check, RotateCcw, Car, Fuel, Gauge, Star, Bell, X, Trash2, Info, AlertTriangle, Calculator } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -26,7 +26,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 export default function EinstellungenPage() {
   const { profile, setProfile, resetProfile } = useVehicleProfile();
-  const { favorites, toggle: toggleFavorite } = useFavorites();
+  const { favorites, toggle: toggleFavorite, allFavorites } = useFavorites();
   const { alarms, removeAlarm, toggleAlarm } = useAlarm();
   const [saved, setSaved] = useState(false);
 
@@ -102,7 +102,7 @@ export default function EinstellungenPage() {
 
         {/* ── Umweg-Vorschau ── */}
         <div>
-          <SectionTitle>🧮 Umweg-Rechner Vorschau</SectionTitle>
+          <SectionTitle><Calculator size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} /> Umweg-Rechner Vorschau</SectionTitle>
           <Card variant="flat" style={{ padding: "14px 16px" }}>
             <div className="flex items-center justify-between">
               <p style={{ fontSize: "13px", color: "#94A3B8" }}>Bei 3km Umweg und 3ct Preisunterschied:</p>
@@ -122,21 +122,36 @@ export default function EinstellungenPage() {
 
         {/* ── Favoriten ── */}
         <div>
-          <SectionTitle>⭐ Favoriten ({favorites.size})</SectionTitle>
+          <SectionTitle><Star size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} /> Favoriten ({favorites.size})</SectionTitle>
           {favorites.size === 0 ? (
             <Card variant="flat" style={{ padding: "20px", textAlign: "center" }}>
               <Star size={22} color="#2A2A3C" style={{ margin: "0 auto 8px" }} />
               <p style={{ fontSize: "13px", color: "#475569" }}>Noch keine Favoriten gespeichert</p>
-              <p style={{ fontSize: "11px", color: "#374151", marginTop: "4px" }}>Tippe ⭐ auf einer Tankstelle um sie zu speichern</p>
+              <p style={{ fontSize: "11px", color: "#374151", marginTop: "4px" }}>Tippe auf einer Tankstelle um sie zu speichern</p>
             </Card>
           ) : (
             <Card variant="flat" style={{ padding: "12px 16px" }}>
               <div className="flex flex-col">
-                {[...favorites].map((id, i) => (
-                  <div key={id} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 0", borderBottom: i < favorites.size - 1 ? "1px solid #1E1E2E" : "none" }}>
+                {allFavorites().map((fav, i) => (
+                  <div key={fav.id} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 0", borderBottom: i < favorites.size - 1 ? "1px solid #1E1E2E" : "none" }}>
                     <Star size={14} color="#F59E0B" fill="#F59E0B" style={{ flexShrink: 0 }} />
-                    <span style={{ flex: 1, fontSize: "11px", color: "#64748B", fontFamily: "monospace" }}>{id.slice(0, 20)}…</span>
-                    <button onClick={() => toggleFavorite(id)} style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "6px", cursor: "pointer", padding: "4px 8px", display: "flex", alignItems: "center", gap: "4px", color: "#EF4444", fontSize: "11px" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: "13px", fontWeight: 600, color: "#F8FAFC", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {fav.brand || fav.name}
+                      </p>
+                      <p style={{ fontSize: "11px", color: "#64748B", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {fav.address}
+                      </p>
+                    </div>
+                    {/* Preis-Badges */}
+                    <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
+                      {fav.e10 && typeof fav.e10 === "number" && (
+                        <span style={{ fontSize: "10px", fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, color: "#22C55E", background: "rgba(34,197,94,0.08)", borderRadius: "4px", padding: "1px 5px" }}>
+                          {fav.e10.toFixed(2).replace(".", ",")}
+                        </span>
+                      )}
+                    </div>
+                    <button onClick={() => toggleFavorite(fav.id)} style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "6px", cursor: "pointer", padding: "4px 8px", display: "flex", alignItems: "center", gap: "4px", color: "#EF4444", fontSize: "11px", flexShrink: 0 }}>
                       <X size={11} /> Entfernen
                     </button>
                   </div>

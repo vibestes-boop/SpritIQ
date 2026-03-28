@@ -1015,7 +1015,7 @@ export default function HomePage() {
       <StationSheet
         station={selectedStation}
         onClose={() => setSelectedStation(null)}
-        onToggleFavorite={toggleFavorite}
+        onToggleFavorite={(id, meta) => toggleFavorite(id, meta)}
         isFavorite={isFavorite}
         snapshots={recentHistory}
         allPrices={allPrices}

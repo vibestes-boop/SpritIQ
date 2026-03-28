@@ -18,7 +18,7 @@ const PriceChart = dynamic(() => import("@/components/ui/PriceChart"), {
 interface StationSheetProps {
   station: Station | null;
   onClose: () => void;
-  onToggleFavorite: (id: string) => void;
+  onToggleFavorite: (id: string, meta?: { name: string; brand?: string; address: string; e10?: number | false; e5?: number | false; diesel?: number | false }) => void;
   isFavorite: (id: string) => boolean;
   snapshots?: PriceSnapshot[];
   allPrices?: number[];           // Alle Preise in der Nähe für Vergleich
@@ -407,7 +407,14 @@ export default function StationSheet({
             </button>
 
             <button
-              onClick={() => onToggleFavorite(station.id)}
+              onClick={() => onToggleFavorite(station.id, {
+                name: station.name,
+                brand: station.brand,
+                address: station.street,
+                e10: station.e10,
+                e5: station.e5,
+                diesel: station.diesel,
+              })}
               style={{ flex: 1, padding: "12px 6px", borderRadius: "12px",
                 background: fav ? "rgba(245,158,11,0.08)" : "#16161F",
                 border: `1px solid ${fav ? "rgba(245,158,11,0.3)" : "#2A2A3C"}`,
