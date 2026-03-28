@@ -16,6 +16,8 @@ import {
   Minus,
   Star,
   Share2,
+  BarChart3,
+  Info,
 } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import Card from "@/components/ui/Card";
@@ -377,7 +379,7 @@ export default function HomePage() {
                   marginBottom: "12px",
                 }}
               >
-                🔔 Preisalarme
+                <Bell size={12} style={{ display: "inline", verticalAlign: "middle" }} /> Preisalarme
               </p>
               <div
                 style={{
@@ -657,7 +659,8 @@ export default function HomePage() {
               <p
                 style={{ fontSize: "11px", color: "#475569", marginTop: "8px" }}
               >
-                📊 Preisverlauf erscheint nach dem ersten Tankstopp-Check
+                <BarChart3 size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} />
+                Preisverlauf erscheint nach dem ersten Tankstopp-Check
               </p>
             )}
           </Card>
@@ -708,7 +711,7 @@ export default function HomePage() {
                 borderRadius: "10px",
               }}
             >
-              <span style={{ fontSize: "13px" }}>ℹ️</span>
+              <Info size={14} color="#F59E0B" />
               <p style={{ fontSize: "11px", color: "#F59E0B" }}>
                 {fuelType.toUpperCase()} nicht verfügbar in deiner Nähe — zeige{" "}
                 {effectiveFuelType.toUpperCase()}-Preise

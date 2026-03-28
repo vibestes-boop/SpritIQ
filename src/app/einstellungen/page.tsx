@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, RotateCcw, Car, Fuel, Gauge, Star, Bell, X, Trash2 } from "lucide-react";
+import { Check, RotateCcw, Car, Fuel, Gauge, Star, Bell, X, Trash2, Info, AlertTriangle } from "lucide-react";
 import BottomNav from "@/components/ui/BottomNav";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -52,7 +52,7 @@ export default function EinstellungenPage() {
 
         {/* ── Fahrzeugprofil ── */}
         <div>
-          <SectionTitle>🚗 Fahrzeugprofil</SectionTitle>
+          <SectionTitle><Car size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} /> Fahrzeugprofil</SectionTitle>
           <Card style={{ padding: "20px" }}>
             <div className="flex flex-col gap-5">
               <div>
@@ -148,12 +148,12 @@ export default function EinstellungenPage() {
 
         {/* ── Preisalarme ── */}
         <div>
-          <SectionTitle>🔔 Preisalarme ({alarms.length})</SectionTitle>
+          <SectionTitle><Bell size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} /> Preisalarme ({alarms.length})</SectionTitle>
           {alarms.length === 0 ? (
             <Card variant="flat" style={{ padding: "20px", textAlign: "center" }}>
               <Bell size={22} color="#2A2A3C" style={{ margin: "0 auto 8px" }} />
               <p style={{ fontSize: "13px", color: "#475569" }}>Noch keine Alarme erstellt</p>
-              <p style={{ fontSize: "11px", color: "#374151", marginTop: "4px" }}>Tippe 🔔 auf der Startseite um einen Alarm zu erstellen</p>
+              <p style={{ fontSize: "11px", color: "#374151", marginTop: "4px" }}>Tippe auf der Startseite um einen Alarm zu erstellen</p>
             </Card>
           ) : (
             <div className="flex flex-col gap-2">
@@ -166,7 +166,7 @@ export default function EinstellungenPage() {
 
         {/* ── App-Info ── */}
         <div>
-          <SectionTitle>ℹ️ App Info</SectionTitle>
+          <SectionTitle><Info size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} /> App Info</SectionTitle>
           <Card variant="flat" style={{ padding: "14px 16px" }}>
             <div className="flex flex-col gap-0">
               {[
@@ -189,7 +189,7 @@ export default function EinstellungenPage() {
 
         {/* ── Daten löschen ── */}
         <div>
-          <SectionTitle>⚠️ Daten zurücksetzen</SectionTitle>
+          <SectionTitle><AlertTriangle size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} /> Daten zurücksetzen</SectionTitle>
           <Card variant="flat" style={{ padding: "14px 16px" }}>
             <div className="flex items-center justify-between">
               <div>

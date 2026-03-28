@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Calculator, TrendingDown, TrendingUp, Minus } from "lucide-react";
+import { X, Calculator, TrendingDown, TrendingUp, Minus, Car } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { calcDetour, type VehicleProfile } from "@/hooks/useVehicleProfile";
 
@@ -252,7 +252,7 @@ export default function DetourModal({
           }}
         >
           <span style={{ fontSize: "12px", color: "#64748B" }}>
-            🚗 {profile.name}
+            <Car size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "3px" }} /> {profile.name}
           </span>
           <span style={{ fontSize: "12px", color: "#64748B" }}>·</span>
           <span style={{ fontSize: "12px", color: "#64748B" }}>

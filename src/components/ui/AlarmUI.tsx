@@ -86,7 +86,7 @@ export function AlarmToast({ alarms, onDismiss }: AlarmToastProps) {
                 marginBottom: "1px",
               }}
             >
-              🎯 Preisalarm ausgelöst!
+              Preisalarm ausgelöst!
             </p>
             <p style={{ fontSize: "12px", color: "#94A3B8" }}>
               {FUEL_LABELS[alarm.fuelType]} unter{" "}

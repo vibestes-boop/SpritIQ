@@ -50,7 +50,7 @@ export interface ShareData {
 
 export async function shareStation(data: ShareData): Promise<boolean> {
   const priceStr = data.price.toFixed(3).replace(".", ",");
-  const text = `⛽ ${data.fuelType} für ${priceStr}€/L\n📍 ${data.stationName} · ${data.address} (${data.dist.toFixed(1)} km)\n\nGefunden mit SpritIQ 🤖 → sprit-iq.vercel.app`;
+  const text = `${data.fuelType} für ${priceStr}€/L\n${data.stationName} · ${data.address} (${data.dist.toFixed(1)} km)\n\nGefunden mit SpritIQ → sprit-iq.vercel.app`;
 
   // Web Share API (Android/iOS nativ)
   if (typeof navigator !== "undefined" && navigator.share) {

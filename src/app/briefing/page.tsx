@@ -1,6 +1,6 @@
 "use client";
 
-import { Brain, TrendingDown, TrendingUp, Minus, RefreshCw, Sparkles, WifiOff, Clock, MapPin, ArrowUp, ArrowDown, ExternalLink } from "lucide-react";
+import { Brain, TrendingDown, TrendingUp, Minus, RefreshCw, Sparkles, WifiOff, Clock, MapPin, ArrowUp, ArrowDown, ExternalLink, Zap, Landmark } from "lucide-react";
 
 // Relative Zeit: "vor 2h" / "vor 3 Min"
 function relativeTime(dateStr: string): string {
@@ -233,7 +233,7 @@ export default function BriefingPage() {
         {(loading || (data?.priceFactors && data.priceFactors.length > 0)) && (
           <div>
             <p style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "11px", fontWeight: 600, color: "#64748B", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "8px", paddingLeft: "4px" }}>
-              ⚡ Preiseinflussfaktoren
+              <Zap size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "3px" }} /> Preiseinflussfaktoren
             </p>
             {loading ? (
               <div className="flex flex-col gap-2">
@@ -250,7 +250,7 @@ export default function BriefingPage() {
         {/* ── Politischer Kontext ── */}
         {(loading || data?.politicalContext) && (
           <Card variant="flat" style={{ padding: "14px 16px" }}>
-            <p style={{ fontSize: "11px", color: "#3B82F6", fontWeight: 600, letterSpacing: "0.05em", marginBottom: "6px" }}>🏛️ POLITIK</p>
+            <p style={{ fontSize: "11px", color: "#3B82F6", fontWeight: 600, letterSpacing: "0.05em", marginBottom: "6px" }}><Landmark size={11} style={{ display: "inline", verticalAlign: "middle", marginRight: "3px" }} /> POLITIK</p>
             {loading ? <div className="flex flex-col gap-2"><SkeletonBlock h="13px" /><SkeletonBlock w="70%" h="13px" /></div> : (
               <p style={{ fontSize: "13px", color: "#94A3B8", lineHeight: 1.6 }}>{data?.politicalContext}</p>
             )}
@@ -260,7 +260,7 @@ export default function BriefingPage() {
         {/* ── Regionale Hotspots ── */}
         {(loading || (data?.regionalHotspots && data.regionalHotspots.length > 0)) && (
           <Card variant="flat" style={{ padding: "14px 16px" }}>
-            <p style={{ fontSize: "11px", color: "#22C55E", fontWeight: 600, letterSpacing: "0.05em", marginBottom: "10px" }}>📍 GÜNSTIGSTE REGIONEN</p>
+            <p style={{ fontSize: "11px", color: "#22C55E", fontWeight: 600, letterSpacing: "0.05em", marginBottom: "10px" }}><MapPin size={11} style={{ display: "inline", verticalAlign: "middle", marginRight: "3px" }} /> GÜNSTIGSTE REGIONEN</p>
             {loading ? (
               <div className="flex gap-2">{[0, 1, 2].map((i) => <div key={i} style={{ height: "28px", flex: 1, borderRadius: "8px", background: "#16161F" }} />)}</div>
             ) : (

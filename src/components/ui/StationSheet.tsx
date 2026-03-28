@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Navigation, Map, Share2, Star, ExternalLink, TrendingDown, TrendingUp, Minus, Zap, Calculator } from "lucide-react";
+import { X, Navigation, Map, Share2, Star, ExternalLink, TrendingDown, TrendingUp, Minus, Zap, Calculator, MapPin } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -67,9 +67,9 @@ function getDiffLabel(price: number | false, prices: number[]): string | null {
 }
 
 const FUEL_META: Record<string, { label: string; icon: string }> = {
-  e10: { label: "Super E10", icon: "⛽" },
-  e5:  { label: "Super E5",  icon: "⛽" },
-  diesel: { label: "Diesel", icon: "🛢" },
+  e10: { label: "Super E10", icon: "e10" },
+  e5:  { label: "Super E5",  icon: "e5" },
+  diesel: { label: "Diesel", icon: "diesel" },
 };
 
 export default function StationSheet({
@@ -178,7 +178,7 @@ export default function StationSheet({
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
                 <span style={{ fontSize: "12px", color: "#94A3B8", background: "#16161F",
                   border: "1px solid #2A2A3C", borderRadius: "6px", padding: "3px 8px" }}>
-                  📍 {station.dist.toFixed(1)} km
+                  <MapPin size={11} style={{ display: "inline", verticalAlign: "middle", marginRight: "3px" }} />{station.dist.toFixed(1)} km
                 </span>
                 <span style={{ display: "flex", alignItems: "center", gap: "5px",
                   fontSize: "12px", fontWeight: 600, padding: "3px 8px", borderRadius: "6px",
@@ -198,10 +198,10 @@ export default function StationSheet({
 
             {/* Close Button */}
             <button onClick={onClose} style={{
-              width: "34px", height: "34px", borderRadius: "10px", background: "#16161F",
+              width: "44px", height: "44px", borderRadius: "12px", background: "#16161F",
               border: "1px solid #2A2A3C", display: "flex", alignItems: "center",
               justifyContent: "center", cursor: "pointer", flexShrink: 0, marginLeft: "12px" }}>
-              <X size={15} color="#64748B" />
+              <X size={18} color="#64748B" />
             </button>
           </div>
 
