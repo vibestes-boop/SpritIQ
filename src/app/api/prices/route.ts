@@ -127,10 +127,14 @@ export async function GET(req: NextRequest) {
   try {
     const { stations, updatedAt } = await getCached();
 
+    // Datenalter prüfen: wenn > 60s alt, stammen sie aus dem Cache
+    const dataAge = Date.now() - new Date(updatedAt).getTime();
+    const source: "api" | "cached" = dataAge > 60_000 ? "cached" : "api";
+
     const response: PricesResponse = {
       ok: true,
       stations,
-      source: "api",
+      source,
       updatedAt,
     };
 

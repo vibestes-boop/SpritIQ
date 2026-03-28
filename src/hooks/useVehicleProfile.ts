@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 
 export interface VehicleProfile {
   /** Kraftstoff-Typ */
@@ -23,22 +23,18 @@ const DEFAULT_PROFILE: VehicleProfile = {
 const STORAGE_KEY = "spritiq_vehicle_profile";
 
 export function useVehicleProfile() {
-  const [profile, setProfileState] = useState<VehicleProfile>(DEFAULT_PROFILE);
-  const [loaded, setLoaded] = useState(false);
-
-  // Lesen aus localStorage (nur Client-Side)
-  useEffect(() => {
+  const [profile, setProfileState] = useState<VehicleProfile>(() => {
+    if (typeof window === "undefined") return DEFAULT_PROFILE;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<VehicleProfile>;
-        setProfileState({ ...DEFAULT_PROFILE, ...parsed });
+        return { ...DEFAULT_PROFILE, ...parsed };
       }
-    } catch {
-      // localStorage nicht verfügbar — Default behalten
-    }
-    setLoaded(true);
-  }, []);
+    } catch { /* localStorage nicht verfügbar */ }
+    return DEFAULT_PROFILE;
+  });
+  const loaded = typeof window !== "undefined";
 
   const setProfile = useCallback((updates: Partial<VehicleProfile>) => {
     setProfileState((prev) => {

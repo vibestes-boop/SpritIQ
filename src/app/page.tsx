@@ -24,7 +24,12 @@ import PriceTag from "@/components/ui/PriceTag";
 import Button from "@/components/ui/Button";
 import DetourModal from "@/components/DetourModal";
 import VoiceButton from "@/components/ui/VoiceButton";
-import PriceChart from "@/components/ui/PriceChart";
+import dynamic from "next/dynamic";
+
+const PriceChart = dynamic(() => import("@/components/ui/PriceChart"), {
+  ssr: false,
+  loading: () => <div style={{ height: "72px", background: "#16161F", borderRadius: "10px" }} />,
+});
 import { AlarmToast, AlarmItem } from "@/components/ui/AlarmUI";
 import { LocationPrompt } from "@/components/ui/LocationPrompt";
 import StationSheet from "@/components/ui/StationSheet";

@@ -73,8 +73,9 @@ export function useAlarm() {
     const now = Date.now();
     const COOLDOWN = 30 * 60 * 1000; // 30 Minuten kein Doppel-Alarm
 
+    const newTriggered: PriceAlarm[] = [];
+
     setAlarms((prev) => {
-      const newTriggered: PriceAlarm[] = [];
       const next = prev.map((alarm) => {
         if (!alarm.enabled) return alarm;
         const price = prices[alarm.fuelType];
@@ -92,10 +93,14 @@ export function useAlarm() {
 
       if (newTriggered.length > 0) {
         saveAlarms(next);
-        setTriggered((t) => [...t, ...newTriggered]);
       }
       return next;
     });
+
+    // Trigger-Liste AUSSERHALB des setAlarms-Updaters setzen (kein Anti-Pattern)
+    if (newTriggered.length > 0) {
+      setTriggered((t) => [...t, ...newTriggered]);
+    }
   }, []);
 
   const dismissTriggered = useCallback((id: string) => {

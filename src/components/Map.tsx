@@ -87,8 +87,9 @@ export default function MapClient() {
       if (typeof window !== "undefined") {
         window.history.replaceState(null, "", window.location.pathname);
       }
+      // Ref zurücksetzen — so funktioniert Highlight auch beim nächsten Besuch
+      highlightFlownRef.current = null;
     }, 9000);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [highlightId, highlightLat, highlightLng]);
 
   // ── Karte initialisieren ─────────────────────────────────────────────────

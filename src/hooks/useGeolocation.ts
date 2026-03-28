@@ -27,14 +27,14 @@ export function useGeolocation() {
   });
 
   // Manuelle Koordinaten-Überschreibung (z.B. aus Stadtsuche)
-  const setManualLocation = useCallback((lat: number, lng: number, label?: string) => {
+  const setManualLocation = useCallback((lat: number, lng: number) => {
     setState({
       lat,
       lng,
       accuracy: null,
       loading: false,
       permission: "granted",
-      error: label ? null : null,
+      error: null,
     });
   }, []);
 

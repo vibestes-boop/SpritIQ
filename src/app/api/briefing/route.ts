@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 // ─── In-Memory Cache (30 Min TTL) ────────────────────────────────────────────
 // Verhindert dass jeder User-Request einen separaten Qwen AI-Call auslöst.
@@ -254,7 +254,7 @@ function getDemoData(): Omit<BriefingResponse, "newsItems" | "articlesAnalyzed" 
 }
 
 // ─── GET /api/briefing ────────────────────────────────────────────────────────
-export async function GET(_req: NextRequest) {
+export async function GET() {
   // ── 1. Cache-Prüfung: Wenn frische Daten vorhanden, sofort zurück ────────
   const cached = getFromCache();
   if (cached) {

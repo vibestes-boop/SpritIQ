@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useId } from "react";
 import {
   AreaChart,
   Area,
@@ -93,6 +93,8 @@ export default function PriceChart({
     };
   }, [snapshots, fuelKey]);
 
+  const instId = useId();
+
   if (data.length < 2) {
     return (
       <div style={{ height: `${height}px`, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -103,7 +105,7 @@ export default function PriceChart({
     );
   }
 
-  const gradId      = `grad-${fuelKey}`;
+  const gradId      = `grad-${fuelKey}-${instId}`;
   // Y-Achsen­bereich: kleinen Puffer um die Daten herum
   const valuePad    = (maxVal - minVal) * 0.25 || 0.005;
   const yDomain     = [
@@ -167,14 +169,6 @@ export default function PriceChart({
             axisLine={false}
             tickLine={false}
             height={18}
-            tickFormatter={(ts: number, i: number) => {
-              if (i === 0) {
-                return new Intl.DateTimeFormat("de-DE", {
-                  weekday: "short", hour: "2-digit", minute: "2-digit",
-                }).format(new Date(ts));
-              }
-              return "Jetzt";
-            }}
           />
 
           <YAxis
