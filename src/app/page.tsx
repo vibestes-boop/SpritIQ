@@ -146,6 +146,7 @@ export default function HomePage() {
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
   const [showAlarmPanel, setShowAlarmPanel] = useState(false);
   const [alarmThreshold, setAlarmThreshold] = useState(1.7);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const { profile } = useVehicleProfile();
   const { addSnapshot, getRecent, getTrend } = usePriceHistory();
@@ -491,7 +492,7 @@ export default function HomePage() {
           <Card
             variant="glass"
             glow={
-              loading
+              loading || bannerDismissed
                 ? "none"
                 : recommendation.status === "good"
                   ? "accent"
@@ -499,9 +500,39 @@ export default function HomePage() {
                     ? "bad"
                     : "warn"
             }
-            style={{ padding: "20px" }}
+            style={{ padding: bannerDismissed ? "12px 16px" : "20px", position: "relative", cursor: bannerDismissed ? "pointer" : "default" }}
+            {...(bannerDismissed ? { onClick: () => setBannerDismissed(false) } : {})}
           >
-            {error ? (
+            {/* Dismiss Button */}
+            {!loading && !error && !bannerDismissed && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setBannerDismissed(true); }}
+                style={{
+                  position: "absolute", top: "10px", right: "10px",
+                  width: "28px", height: "28px", borderRadius: "8px",
+                  background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                  zIndex: 2,
+                }}
+                aria-label="Empfehlung minimieren"
+              >
+                <Minus size={12} color="#64748B" />
+              </button>
+            )}
+            {bannerDismissed ? (
+              <div className="flex items-center gap-3" style={{ cursor: "pointer" }}>
+                <div style={{
+                  width: "8px", height: "8px", borderRadius: "50%",
+                  background: recommendation.status === "good" ? "#22C55E" : recommendation.status === "bad" ? "#EF4444" : "#F59E0B",
+                  boxShadow: `0 0 6px ${recommendation.status === "good" ? "rgba(34,197,94,0.5)" : recommendation.status === "bad" ? "rgba(239,68,68,0.5)" : "rgba(245,158,11,0.5)"}`,
+                  flexShrink: 0,
+                }} />
+                <p style={{ fontSize: "12px", color: "#94A3B8", flex: 1 }}>
+                  {recommendation.status === "good" ? "Tanken empfohlen" : recommendation.status === "bad" ? "Abwarten" : "Preise beobachten"}
+                </p>
+                <ChevronRight size={14} color="#475569" />
+              </div>
+            ) : error ? (
               <div className="flex items-center gap-3">
                 <WifiOff size={20} color="#EF4444" />
                 <div>

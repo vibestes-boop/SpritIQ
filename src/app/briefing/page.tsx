@@ -1,6 +1,6 @@
 "use client";
 
-import { Brain, TrendingDown, TrendingUp, Minus, RefreshCw, Sparkles, WifiOff, Clock, MapPin, ArrowUp, ArrowDown, ExternalLink, Zap, Landmark } from "lucide-react";
+import { Brain, TrendingDown, TrendingUp, Minus, RefreshCw, Sparkles, WifiOff, Clock, MapPin, ArrowUp, ArrowDown, ExternalLink, Zap, Landmark, Calendar } from "lucide-react";
 
 // Relative Zeit: "vor 2h" / "vor 3 Min"
 function relativeTime(dateStr: string): string {
@@ -27,7 +27,17 @@ function SkeletonBlock({ w = "100%", h = "16px" }: { w?: string; h?: string }) {
 // ─── Wochenprognose-Bar-Chart ────────────────────────────────────────────────
 function WeeklyForecastChart({ forecast }: { forecast: DayForecast[] }) {
   const levelHeight = { low: 28, mid: 48, high: 68 };
+  const levelGradient = {
+    low:  "linear-gradient(180deg, #22C55E 0%, rgba(34,197,94,0.3) 100%)",
+    mid:  "linear-gradient(180deg, #F59E0B 0%, rgba(245,158,11,0.3) 100%)",
+    high: "linear-gradient(180deg, #EF4444 0%, rgba(239,68,68,0.3) 100%)",
+  };
   const levelColor  = { low: "#22C55E", mid: "#F59E0B", high: "#EF4444" };
+  const levelGlow   = {
+    low:  "0 -2px 12px rgba(34,197,94,0.3)",
+    mid:  "0 -2px 12px rgba(245,158,11,0.25)",
+    high: "0 -2px 12px rgba(239,68,68,0.25)",
+  };
   const levelLabel  = { low: "günstig", mid: "mittel", high: "teuer" };
 
   return (
@@ -35,7 +45,22 @@ function WeeklyForecastChart({ forecast }: { forecast: DayForecast[] }) {
       <div style={{ display: "flex", alignItems: "flex-end", gap: "6px", height: "80px" }}>
         {forecast.map(({ day, level }) => (
           <div key={day} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
-            <div style={{ width: "100%", height: `${levelHeight[level]}px`, background: `rgba(${level === "low" ? "34,197,94" : level === "mid" ? "245,158,11" : "239,68,68"},0.2)`, border: `1px solid rgba(${level === "low" ? "34,197,94" : level === "mid" ? "245,158,11" : "239,68,68"},0.4)`, borderRadius: "6px 6px 0 0", transition: "all 300ms ease" }} />
+            <div style={{
+              width: "100%",
+              height: `${levelHeight[level]}px`,
+              background: levelGradient[level],
+              borderRadius: "8px 8px 2px 2px",
+              boxShadow: levelGlow[level],
+              transition: "all 400ms cubic-bezier(0.4,0,0.2,1)",
+              position: "relative",
+              overflow: "hidden",
+            }}>
+              {/* Shimmer-Effekt */}
+              <div style={{
+                position: "absolute", top: 0, left: 0, right: 0, height: "1px",
+                background: `linear-gradient(90deg, transparent, ${levelColor[level]}66, transparent)`,
+              }} />
+            </div>
           </div>
         ))}
       </div>
@@ -49,7 +74,7 @@ function WeeklyForecastChart({ forecast }: { forecast: DayForecast[] }) {
       <div style={{ display: "flex", gap: "12px", marginTop: "10px", justifyContent: "center" }}>
         {(["low", "mid", "high"] as const).map((l) => (
           <div key={l} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <div style={{ width: "8px", height: "8px", borderRadius: "2px", background: levelColor[l] }} />
+            <div style={{ width: "8px", height: "8px", borderRadius: "2px", background: levelGradient[l] }} />
             <span style={{ fontSize: "10px", color: "#64748B" }}>{levelLabel[l]}</span>
           </div>
         ))}
@@ -217,7 +242,7 @@ export default function BriefingPage() {
 
         {/* ── Wochenprognose ── */}
         <Card variant="flat" style={{ padding: "16px" }}>
-          <p style={{ fontSize: "11px", fontWeight: 700, color: "#64748B", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "14px" }}>📅 Wochenprognose</p>
+          <p style={{ fontSize: "11px", fontWeight: 700, color: "#64748B", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "14px" }}><Calendar size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "3px" }} /> Wochenprognose</p>
           {loading ? (
             <div style={{ display: "flex", gap: "6px", alignItems: "flex-end", height: "80px" }}>
               {[50, 70, 40, 40, 60, 80, 80].map((h, i) => <div key={i} style={{ flex: 1, height: `${h}px`, borderRadius: "6px 6px 0 0", background: "#16161F" }} />)}

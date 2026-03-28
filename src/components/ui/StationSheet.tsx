@@ -367,7 +367,7 @@ export default function StationSheet({
           </div>
 
           {/* Spacer für fixed Footer */}
-          <div style={{ height: "130px" }} />
+          <div style={{ height: "160px" }} />
         </div>
 
         {/* ══ FIXIERTER FOOTER MIT AKTIONEN ══════════════════════════════════ */}
